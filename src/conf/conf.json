@@ -1,0 +1,6 @@
+{
+  "http.port": 8082,
+  "http.address": "127.0.0.2",
+  "total.connection": 5,
+  "connection.interval": 100
+}
