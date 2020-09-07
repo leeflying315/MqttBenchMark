@@ -4,12 +4,10 @@ import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.china.unicom.mqtt.utils.Utils;
 import com.china.unicom.mqtt.verticle.MqttClientBindNetworkVerticle;
-import com.china.unicom.mqtt.verticle.MqttClientVerticle;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.yaml.snakeyaml.Yaml;
@@ -43,7 +41,7 @@ public class BenchMarkStarter {
             LOGGER.error(" no source ip input in config.yaml, system exit");
             return;
         }
-        String src = "F:\\workspace\\MqttBenchMark\\src\\main\\resources\\UPCT.txt";
+        String src = "conf/UPCT.txt";
         List<List<MqttSessionBean>> sortSessionGroup = getSessionInfo(src, totalConnection, sourceIps.length);
         int currentIps = 0;
         LOGGER.info("sort gourp is {}",sortSessionGroup.size());
@@ -59,7 +57,7 @@ public class BenchMarkStarter {
 
     public static Config initConfig() {
         Yaml yaml = new Yaml(new Constructor(Config.class));
-        InputStream inputStream = BenchMarkStarter.class.getClassLoader().getResourceAsStream("config.yaml");
+        InputStream inputStream = BenchMarkStarter.class.getClassLoader().getResourceAsStream("conf/config.yaml");
         return yaml.load(inputStream);
     }
 

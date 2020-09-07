@@ -5,14 +5,12 @@ import com.china.unicom.mqtt.config.Config;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.mqtt.MqttClient;
 import io.vertx.mqtt.MqttClientOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -89,7 +87,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         boolean useSsl = config.getServer().isUseTls();
         if (useSsl) {
             mqttClientOptions.setSsl(true)
-                .setPfxTrustOptions(new PfxOptions().setPath("clientcert.p12").setPassword("123456"));
+                .setPfxTrustOptions(new PfxOptions().setPath("conf/clientcert.p12").setPassword("123456"));
         }
         return mqttClientOptions;
     }
