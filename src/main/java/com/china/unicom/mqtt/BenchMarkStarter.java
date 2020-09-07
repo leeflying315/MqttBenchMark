@@ -44,7 +44,7 @@ public class BenchMarkStarter {
         String src = "conf/UPCT.txt";
         List<List<MqttSessionBean>> sortSessionGroup = getSessionInfo(src, totalConnection, sourceIps.length);
         int currentIps = 0;
-        LOGGER.info("sort gourp is {}",sortSessionGroup.size());
+        LOGGER.info("sort group is {}", sortSessionGroup.size());
         for (List<MqttSessionBean> sessionBeanList : sortSessionGroup) {
             config.put("localIp", sourceIps[currentIps]);
             String jsonArray = objectMapper.writeValueAsString(sessionBeanList);
@@ -67,7 +67,7 @@ public class BenchMarkStarter {
             LOGGER.error("input mock session data counts {}, less than target {}", mqttSessionBeanList.size(),
                 totalConnection);
         }
-        mqttSessionBeanList = mqttSessionBeanList.subList(0,totalConnection);
+        mqttSessionBeanList = mqttSessionBeanList.subList(0, totalConnection);
         return Utils.splitList(mqttSessionBeanList, networkCards);
 
     }

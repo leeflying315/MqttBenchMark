@@ -4,7 +4,9 @@ import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.mqtt.MqttClient;
 import io.vertx.mqtt.MqttClientOptions;
@@ -26,13 +28,13 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
     @Override
     public void start() {
         String str = context.config().getString("configBean");
-        Config config = null;
+        Config configTemp = null;
         try {
-            config = objectMapper.readValue(str, Config.class);
+            configTemp = objectMapper.readValue(str, Config.class);
         } catch (JsonProcessingException e) {
             LOGGER.error("", e);
         }
-
+        final Config config = configTemp;
         String host = config.getServer().getIp();
         int port = config.getServer().getPort();
         int interval = config.getInterval();
@@ -56,11 +58,11 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
             MqttSessionBean mqttSessionBean = list[totalCount.get()];
             mqttClientOptions.setUsername(mqttSessionBean.getUserName()).setPassword(mqttClientOptions.getPassword())
                 .setClientId(mqttClientOptions.getClientId());
-            // client = MqttClient.create(vertx, mqttClientOptions);
 
             client.connect(port, host, s -> {
                 if (s.succeeded()) {
                     successCount.incrementAndGet();
+                    publishMessage(config, client, mqttSessionBean.getTopic());
                     LOGGER.info("Connected to a server");
                 } else {
                     errorCount.incrementAndGet();
@@ -101,6 +103,16 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         } catch (JsonProcessingException e) {
             LOGGER.error("", e);
             return null;
+        }
+    }
+
+    public void publishMessage(Config config, MqttClient client, String topic) {
+        if (config.getTopic().isPublishMessage()) {
+            int qos = config.getTopic().getQos();
+            int interval = config.getTopic().getPublishInterval();
+            vertx.setPeriodic(interval, time -> {
+                client.publish(topic, Buffer.buffer("publish test message"), MqttQoS.valueOf(qos), false, false);
+            });
         }
     }
 }

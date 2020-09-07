@@ -5,3 +5,7 @@ server:
 totalConnection: 7
 interval: 500
 ipLists: 127.0.0.1
+topic:
+  publishMessage: true
+  publishInterval: 500
+  qos: 1
