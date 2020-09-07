@@ -1,7 +1,7 @@
 server:
-  port: 8883
+  port: 8884
   ip: 127.0.0.1
   useTls: true
-totalConnection: 5
+totalConnection: 7
 interval: 500
 ipLists: 127.0.0.1
