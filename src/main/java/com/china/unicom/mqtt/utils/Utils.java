@@ -10,10 +10,8 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.LinkedList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class Utils {
     private static org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(Utils.class);
@@ -54,7 +52,7 @@ public class Utils {
     // 拆分list为N个组
     public static <T> List<List<T>> splitList(List<T> list, int num) {
         int length = list.size();
-        int groupSize = list.size()/num;
+        int groupSize = list.size() / num;
         List<List<T>> newList = new ArrayList<>(num);
         for (int i = 0; i < num; i++) {
             // 开始位置
@@ -83,7 +81,7 @@ public class Utils {
                     LOGGER.error("illegal input length {} for {}", input.length, input);
                 } else {
                     mqttSessionBeanSet.add(MqttSessionBean.builder().userName(input[0]).passwd(input[1])
-                            .clientId(input[2]).topic(input[3]).build());
+                        .clientId(input[2]).topic(input[3]).build());
                 }
 
             }
@@ -91,5 +89,39 @@ public class Utils {
             LOGGER.error("", e);
         }
         return mqttSessionBeanSet;
+    }
+
+    // 最近一个月到现在的随机时间
+    public static long randomTime() {
+        Calendar calendar = Calendar.getInstance();// 获取当前日期
+        Date currentDate = new Date();
+        calendar.setTime(currentDate); // 设置为当前时间
+        calendar.set(Calendar.MONTH, calendar.get(Calendar.MONTH) - 1); // 设置为上一个月
+
+        Date date = calendar.getTime();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        long begin = calendar.getTimeInMillis();
+        return begin + (long)(Math.random() * (System.currentTimeMillis() - begin));
+
+    }
+
+    public static Integer randomInteger() {
+        int max = Integer.MAX_VALUE - 10;
+        int min = 1;
+        Random random = new Random();
+
+        int s = random.nextInt(max) % (max - min) + min;
+        System.out.println(s);
+        return s;
+    }
+
+    public static String getInputString() {
+        StringBuilder sb = new StringBuilder("{\"messageId\":\"");
+        sb.append(randomInteger());
+        sb.append("\",\"ts\":\"");
+        sb.append(Utils.randomTime());
+        sb.append(
+            "\",\"params\":{\"data\":[{\"key\":\"lightVoltage\",\"value\":499.01},{\"key\":\"lightCurrent\",\"value\":9.01},{\"key\":\"lightIllumination\",\"value\":9998.1},{\"key\":\"powerConsumption\",\"value\":2147483646.01},{\"key\":\"tiltValue\",\"value\":90},{\"key\":\"lightStatus\",\"value\":1},{\"key\":\"geoLocation\",\"value\":{\"longitude\":-179.000001,\"latitude\":-89.000001,\"altitude\":9998}}]}}");
+        return sb.toString();
     }
 }

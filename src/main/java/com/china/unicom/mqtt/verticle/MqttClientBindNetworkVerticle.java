@@ -2,6 +2,7 @@ package com.china.unicom.mqtt.verticle;
 
 import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
+import com.china.unicom.mqtt.utils.Utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
@@ -111,7 +112,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
             int qos = config.getTopic().getQos();
             int interval = config.getTopic().getPublishInterval();
             vertx.setPeriodic(interval, time -> {
-                client.publish(topic, Buffer.buffer("publish test message"), MqttQoS.valueOf(qos), false, false);
+                client.publish(topic, Buffer.buffer(Utils.getInputString()), MqttQoS.valueOf(qos), false, false);
             });
         }
     }
