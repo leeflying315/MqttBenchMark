@@ -3,6 +3,7 @@ package com.china.unicom.mqtt;
 import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.china.unicom.mqtt.utils.Utils;
+import com.china.unicom.mqtt.verticle.MqttClientBindNetworkForeachVerticle;
 import com.china.unicom.mqtt.verticle.MqttClientBindNetworkVerticle;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,8 +14,14 @@ import org.apache.logging.log4j.LogManager;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+
+import static java.nio.file.Files.readAllBytes;
 
 public class BenchMarkStarter {
     private static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(BenchMarkStarter.class);
@@ -22,7 +29,13 @@ public class BenchMarkStarter {
 
     public static void main(String[] args) throws JsonProcessingException {
 
-        Config configBean = initConfig();
+        Config configBean = null;
+        try {
+            configBean = initConfig();
+        } catch (IOException e) {
+            LOGGER.error("", e);
+        }
+        LOGGER.info("config is {}", configBean);
         int totalConnection = configBean.getTotalConnection();
         String str = null;
         try {
@@ -49,16 +62,19 @@ public class BenchMarkStarter {
             config.put("localIp", sourceIps[currentIps]);
             String jsonArray = objectMapper.writeValueAsString(sessionBeanList);
             config.put("sessionList", jsonArray);
-            vertx.deployVerticle(MqttClientBindNetworkVerticle.class.getName(),
-                new DeploymentOptions().setConfig(config));
+//            vertx.deployVerticle(MqttClientBindNetworkVerticle.class.getName(),
+//                new DeploymentOptions().setConfig(config));
+
+            vertx.deployVerticle(MqttClientBindNetworkForeachVerticle.class.getName(),
+                    new DeploymentOptions().setConfig(config));
             currentIps++;
         }
     }
 
-    public static Config initConfig() {
+    public static Config initConfig() throws IOException {
         Yaml yaml = new Yaml(new Constructor(Config.class));
-        InputStream inputStream = BenchMarkStarter.class.getClassLoader().getResourceAsStream("conf/config.yaml");
-        return yaml.load(inputStream);
+        String input  =new String(readAllBytes(Paths.get("/data/lifei/conf/config.yaml")));
+        return yaml.load(input);
     }
 
     public static List<List<MqttSessionBean>> getSessionInfo(String src, int totalConnection, int networkCards) {

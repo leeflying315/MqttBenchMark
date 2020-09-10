@@ -1,30 +1,44 @@
 package com.china.unicom.mqtt.verticle;
 
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.china.unicom.mqtt.utils.Utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.mqtt.MqttClient;
 import io.vertx.mqtt.MqttClientOptions;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Author: lifei
  * @Description:
  * @Date: 2020/9/7
  */
-public class MqttClientBindNetworkVerticle extends AbstractVerticle {
-    private static final Logger LOGGER = LogManager.getLogger(MqttClientBindNetworkVerticle.class);
+public class MqttClientBindNetworkForeachVerticle extends AbstractVerticle {
+    private static final Logger LOGGER = LogManager.getLogger(MqttClientBindNetworkForeachVerticle.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    AtomicInteger successCount = new AtomicInteger(0);
+    AtomicInteger errorCount = new AtomicInteger(0);
+    AtomicInteger totalCount = new AtomicInteger(0);
+
+    private String host;
+
+    private int port;
+
+    private int totalConnection;
+
+    private long currentTime;
 
     @Override
     public void start() {
@@ -36,52 +50,49 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
             LOGGER.error("", e);
         }
         final Config config = configTemp;
-        String host = config.getServer().getIp();
-        int port = config.getServer().getPort();
-        int interval = config.getInterval();
+        host = config.getServer().getIp();
+        port = config.getServer().getPort();
 
         MqttClientOptions mqttClientOptions = initClientOptions(config);
-        mqttClientOptions.setClientId(UUID.randomUUID().toString());
-
         MqttClient client = MqttClient.create(vertx, mqttClientOptions);
 
-        AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger errorCount = new AtomicInteger(0);
-        AtomicInteger totalCount = new AtomicInteger(0);
-
-        long currentTime = System.currentTimeMillis();
+        currentTime = System.currentTimeMillis();
         MqttSessionBean[] list = getSessionList();
-        int totalConnection = list.length;
+        totalConnection = list.length;
+
         LOGGER.info("total connection is {}", totalConnection);
+        connect(client, config, list, mqttClientOptions);
 
-        vertx.setPeriodic(interval, time -> {
-            MqttSessionBean mqttSessionBean = list[totalCount.get()];
-            mqttClientOptions.setUsername(mqttSessionBean.getUserName()).setPassword(mqttSessionBean.getPasswd())
-                .setClientId(mqttSessionBean.getClientId());
+    }
 
-            client.connect(port, host, s -> {
-                totalCount.incrementAndGet();
+    private void connect(MqttClient client, Config config, MqttSessionBean[] mqttSessionBeanList,
+        MqttClientOptions mqttClientOptions) {
 
-                if (s.succeeded()) {
-                    successCount.incrementAndGet();
-                    publishMessage(config, client, mqttSessionBean.getTopic());
-                    LOGGER.info("Connected to a server success, current success count {}, total count {}",
-                        successCount.get(), totalCount.get());
-                } else {
-                    errorCount.incrementAndGet();
-                    LOGGER.error("client id: {}, userName: {}, passwd {}", mqttClientOptions.getClientId(),
-                        mqttClientOptions.getUsername(), mqttClientOptions.getPassword());
-                    LOGGER.error("Failed to connect to a server ", s.cause());
-                }
-                if (totalCount.get() >= totalConnection) {
-                    LOGGER.info(
-                        "all connection finished," + " total connections {}, success {}, " + "error {}, costs {} ms",
-                        totalCount, successCount, errorCount, System.currentTimeMillis() - currentTime);
-                    vertx.cancelTimer(time);
-                }
-            });
+        MqttSessionBean mqttSessionBean = mqttSessionBeanList[totalCount.get()];
+        mqttClientOptions.setUsername(mqttSessionBean.getUserName()).setPassword(mqttSessionBean.getPasswd())
+            .setClientId(mqttSessionBean.getClientId());
+        client.connect(port, host, s -> {
+            totalCount.incrementAndGet();
+
+            if (s.succeeded()) {
+                successCount.incrementAndGet();
+                publishMessage(config, client, mqttSessionBean.getTopic());
+                LOGGER.info("Connected to a server success, current success count {}, total count {}",
+                    successCount.get(), totalCount.get());
+            } else {
+                errorCount.incrementAndGet();
+                LOGGER.error("client id: {}, userName: {}, passwd {}", mqttClientOptions.getClientId(),
+                    mqttClientOptions.getUsername(), mqttClientOptions.getPassword());
+                LOGGER.error("Failed to connect to a server ", s.cause());
+            }
+            if (totalCount.get() >= totalConnection) {
+                LOGGER.info(
+                    "all connection finished," + " total connections {}, success {}, " + "error {}, costs {} ms",
+                    totalCount, successCount, errorCount, System.currentTimeMillis() - currentTime);
+            } else {
+                connect(client, config, mqttSessionBeanList, mqttClientOptions);
+            }
         });
-
     }
 
     public MqttClientOptions initClientOptions(Config config) {

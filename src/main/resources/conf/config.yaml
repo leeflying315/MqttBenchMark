@@ -1,11 +1,11 @@
 server:
-  port: 8884
-  ip: 127.0.0.1
+  port: 8883
+  ip: 172.30.104.191
   useTls: true
-totalConnection: 7
-interval: 500
-ipLists: 127.0.0.1
+totalConnection: 100
+interval: 1000
+ipLists: 172.30.227.8
 topic:
-  publishMessage: true
+  publishMessage: false
   publishInterval: 500
   qos: 1
