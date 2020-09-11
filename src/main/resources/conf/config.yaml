@@ -2,6 +2,7 @@ server:
   port: 8883
   ip: 172.30.104.191
   useTls: true
+  heartBeatInterval: 30
 totalConnection: 100
 interval: 1000
 ipLists: 172.30.227.8

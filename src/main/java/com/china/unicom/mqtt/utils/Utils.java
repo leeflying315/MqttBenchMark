@@ -49,7 +49,7 @@ public class Utils {
         return ipList;
     }
 
-    // 拆分list为N个组
+    // 拆分list为num个组
     public static <T> List<List<T>> splitList(List<T> list, int num) {
         int length = list.size();
         int groupSize = list.size() / num;

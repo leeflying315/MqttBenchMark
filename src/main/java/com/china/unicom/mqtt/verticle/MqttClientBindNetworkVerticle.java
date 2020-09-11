@@ -84,7 +84,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         MqttClientOptions mqttClientOptions = new MqttClientOptions();
 
         mqttClientOptions.setAutoKeepAlive(true);
-        mqttClientOptions.setKeepAliveTimeSeconds(10);
+        mqttClientOptions.setKeepAliveTimeSeconds(config.getServer().getHeartBeatInterval());
         mqttClientOptions.setCleanSession(false);
 
         String localIp = context.config().getString("localIp");
@@ -93,7 +93,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         boolean useSsl = config.getServer().isUseTls();
         if (useSsl) {
             mqttClientOptions.setSsl(true)
-//                    .setTrustAll(true);
+                // .setTrustAll(true);
                 .setPfxTrustOptions(new PfxOptions().setPath("conf/clientcert.p12").setPassword("123456"));
         }
         return mqttClientOptions;

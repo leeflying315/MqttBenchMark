@@ -45,34 +45,35 @@ public class BenchMarkStarter {
 
         Vertx vertx = Vertx.vertx();
 
-        String[] sourceIps = configBean.getIpLists().split(",");
-
         if (configBean.ipLists == null) {
             LOGGER.error(" no source ip input in config.yaml, system exit");
             return;
         }
+        String[] sourceIps = configBean.getIpLists().split(",");
+
         String src = "conf/UPCT.txt";
         List<List<MqttSessionBean>> sortSessionGroup = getSessionInfo(src, totalConnection, sourceIps.length);
         int currentIps = 0;
         LOGGER.info("sort group is {}", sortSessionGroup.size());
         for (List<MqttSessionBean> sessionBeanList : sortSessionGroup) {
+            LOGGER.info("verticle start by ip {}", sourceIps[currentIps]);
             config.put("localIp", sourceIps[currentIps]);
             String jsonArray = objectMapper.writeValueAsString(sessionBeanList);
             config.put("sessionList", jsonArray);
             // 定时建连
             vertx.deployVerticle(MqttClientBindNetworkVerticle.class.getName(),
                 new DeploymentOptions().setConfig(config));
-//
+            //
             // 递归建
-//            vertx.deployVerticle(MqttClientBindNetworkForeachVerticle.class.getName(),
-//                    new DeploymentOptions().setConfig(config));
+            // vertx.deployVerticle(MqttClientBindNetworkForeachVerticle.class.getName(),
+            // new DeploymentOptions().setConfig(config));
             currentIps++;
         }
     }
 
     public static Config initConfig() throws IOException {
         Yaml yaml = new Yaml(new Constructor(Config.class));
-        String input  =new String(readAllBytes(Paths.get("./conf/config.yaml")));
+        String input = new String(readAllBytes(Paths.get("./conf/config.yaml")));
         return yaml.load(input);
     }
 

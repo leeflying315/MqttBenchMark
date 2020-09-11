@@ -12,18 +12,7 @@ public class Config {
 
     public Server server;
 
-    public Server getServer() {
-        return server;
-    }
-
     public Topic topic;
-
-
-
-    public void setServer(Server server) {
-        this.server = server;
-    }
-
     // 总连接数
     public int totalConnection;
     // 单个实例的连接间隔
@@ -50,6 +39,8 @@ public class Config {
         public String ip;
 
         public boolean useTls;
+
+        public Integer heartBeatInterval;
     }
 
 }

@@ -4,8 +4,8 @@
  - 支持连接数总量设置
  - 支持定时发送
  - 支持读取配置文件获取clientId、UserName、PassWord
- - 支持迭代发送，压测服务端极限速度
- - 
+ - 支持迭代发送，压测服务端极限速度（Starter中修改启动的verticle）
+ - 支持心跳自定义时间间隔
 
 ## 使用方式
 1. 使用mvn clean package 打包
