@@ -1,5 +1,11 @@
 # MqttBenchMark
- MQTT 性能压测工具，支持虚拟网卡，支持定时定量配置
+ MQTT 性能压测工具，
+ - 支持虚拟网卡，解决单机65536端口总数限制
+ - 支持连接数总量设置
+ - 支持定时发送
+ - 支持读取配置文件获取clientId、UserName、PassWord
+ - 支持迭代发送，压测服务端极限速度
+ - 
 
 ## 使用方式
 1. 使用mvn clean package 打包

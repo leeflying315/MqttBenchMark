@@ -51,9 +51,6 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         MqttClientOptions mqttClientOptions = initClientOptions(config);
 
         vertx.setPeriodic(interval, time -> {
-            mqttClientOptions.setAutoKeepAlive(true);
-            mqttClientOptions.setKeepAliveTimeSeconds(10);
-            mqttClientOptions.setCleanSession(false);
             MqttClient client = MqttClient.create(vertx, mqttClientOptions);
             MqttSessionBean mqttSessionBean = list[totalCount.get()];
             mqttClientOptions.setUsername(mqttSessionBean.getUserName()).setPassword(mqttSessionBean.getPasswd())
@@ -85,6 +82,10 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
 
     public MqttClientOptions initClientOptions(Config config) {
         MqttClientOptions mqttClientOptions = new MqttClientOptions();
+
+        mqttClientOptions.setAutoKeepAlive(true);
+        mqttClientOptions.setKeepAliveTimeSeconds(10);
+        mqttClientOptions.setCleanSession(false);
 
         String localIp = context.config().getString("localIp");
         mqttClientOptions.setLocalAddress(localIp);
