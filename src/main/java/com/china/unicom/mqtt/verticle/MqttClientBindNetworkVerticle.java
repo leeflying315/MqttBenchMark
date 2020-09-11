@@ -40,11 +40,6 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         int port = config.getServer().getPort();
         int interval = config.getInterval();
 
-        MqttClientOptions mqttClientOptions = initClientOptions(config);
-        mqttClientOptions.setClientId(UUID.randomUUID().toString());
-
-        MqttClient client = MqttClient.create(vertx, mqttClientOptions);
-
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger errorCount = new AtomicInteger(0);
         AtomicInteger totalCount = new AtomicInteger(0);
@@ -53,12 +48,16 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         MqttSessionBean[] list = getSessionList();
         int totalConnection = list.length;
         LOGGER.info("total connection is {}", totalConnection);
+        MqttClientOptions mqttClientOptions = initClientOptions(config);
 
         vertx.setPeriodic(interval, time -> {
+            mqttClientOptions.setAutoKeepAlive(true);
+            mqttClientOptions.setKeepAliveTimeSeconds(10);
+            mqttClientOptions.setCleanSession(false);
+            MqttClient client = MqttClient.create(vertx, mqttClientOptions);
             MqttSessionBean mqttSessionBean = list[totalCount.get()];
             mqttClientOptions.setUsername(mqttSessionBean.getUserName()).setPassword(mqttSessionBean.getPasswd())
                 .setClientId(mqttSessionBean.getClientId());
-
             client.connect(port, host, s -> {
                 totalCount.incrementAndGet();
 
@@ -93,6 +92,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         boolean useSsl = config.getServer().isUseTls();
         if (useSsl) {
             mqttClientOptions.setSsl(true)
+//                    .setTrustAll(true);
                 .setPfxTrustOptions(new PfxOptions().setPath("conf/clientcert.p12").setPassword("123456"));
         }
         return mqttClientOptions;

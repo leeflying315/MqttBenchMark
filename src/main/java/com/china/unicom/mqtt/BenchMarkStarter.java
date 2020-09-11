@@ -14,10 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -62,18 +59,20 @@ public class BenchMarkStarter {
             config.put("localIp", sourceIps[currentIps]);
             String jsonArray = objectMapper.writeValueAsString(sessionBeanList);
             config.put("sessionList", jsonArray);
-//            vertx.deployVerticle(MqttClientBindNetworkVerticle.class.getName(),
-//                new DeploymentOptions().setConfig(config));
-
-            vertx.deployVerticle(MqttClientBindNetworkForeachVerticle.class.getName(),
-                    new DeploymentOptions().setConfig(config));
+            // 定时建连
+            vertx.deployVerticle(MqttClientBindNetworkVerticle.class.getName(),
+                new DeploymentOptions().setConfig(config));
+//
+            // 递归建
+//            vertx.deployVerticle(MqttClientBindNetworkForeachVerticle.class.getName(),
+//                    new DeploymentOptions().setConfig(config));
             currentIps++;
         }
     }
 
     public static Config initConfig() throws IOException {
         Yaml yaml = new Yaml(new Constructor(Config.class));
-        String input  =new String(readAllBytes(Paths.get("/data/lifei/conf/config.yaml")));
+        String input  =new String(readAllBytes(Paths.get("./conf/config.yaml")));
         return yaml.load(input);
     }
 

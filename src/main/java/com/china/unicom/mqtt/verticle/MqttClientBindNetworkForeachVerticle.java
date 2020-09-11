@@ -93,6 +93,12 @@ public class MqttClientBindNetworkForeachVerticle extends AbstractVerticle {
                 connect(client, config, mqttSessionBeanList, mqttClientOptions);
             }
         });
+        client.closeHandler(e -> {
+            LOGGER.warn("connection closed");
+        });
+        client.exceptionHandler(event -> {
+            LOGGER.error("", event);
+        });
     }
 
     public MqttClientOptions initClientOptions(Config config) {
