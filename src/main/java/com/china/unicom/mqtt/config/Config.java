@@ -18,7 +18,6 @@ public class Config {
     // 单个实例的连接间隔
     public Integer interval;
 
-
     // 源IP列表，使用逗号分隔
     public String ipLists;
 
@@ -30,6 +29,7 @@ public class Config {
 
         public Integer qos;
 
+        public Integer messageCount;
     }
 
     @Data

@@ -10,3 +10,4 @@ topic:
   publishMessage: false
   publishInterval: 500
   qos: 1
+  messageCount: 50

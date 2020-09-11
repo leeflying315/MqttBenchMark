@@ -56,8 +56,6 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
             mqttClientOptions.setUsername(mqttSessionBean.getUserName()).setPassword(mqttSessionBean.getPasswd())
                 .setClientId(mqttSessionBean.getClientId());
             client.connect(port, host, s -> {
-                totalCount.incrementAndGet();
-
                 if (s.succeeded()) {
                     successCount.incrementAndGet();
                     publishMessage(config, client, mqttSessionBean.getTopic());
@@ -69,13 +67,15 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                         mqttClientOptions.getUsername(), mqttClientOptions.getPassword());
                     LOGGER.error("Failed to connect to a server ", s.cause());
                 }
-                if (totalCount.get() >= totalConnection) {
-                    LOGGER.info(
-                        "all connection finished," + " total connections {}, success {}, " + "error {}, costs {} ms",
-                        totalCount, successCount, errorCount, System.currentTimeMillis() - currentTime);
-                    vertx.cancelTimer(time);
-                }
             });
+            // 独立计数，client连接建立过慢时会导致多发连接请求
+            totalCount.incrementAndGet();
+            if (totalCount.get() >= totalConnection) {
+                LOGGER.info(
+                    "all connection finished," + " total connections {}, success {}, " + "error {}, costs {} ms",
+                    totalCount, successCount, errorCount, System.currentTimeMillis() - currentTime);
+                vertx.cancelTimer(time);
+            }
         });
 
     }
@@ -85,7 +85,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
 
         mqttClientOptions.setAutoKeepAlive(true);
         mqttClientOptions.setKeepAliveTimeSeconds(config.getServer().getHeartBeatInterval());
-        mqttClientOptions.setCleanSession(false);
+        mqttClientOptions.setCleanSession(true);
 
         String localIp = context.config().getString("localIp");
         mqttClientOptions.setLocalAddress(localIp);
@@ -115,8 +115,27 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         if (config.getTopic().isPublishMessage()) {
             int qos = config.getTopic().getQos();
             int interval = config.getTopic().getPublishInterval();
+            Buffer buffer = Buffer.buffer(Utils.getInputString());
+            LOGGER.info("topic is {}, Body is {}", topic, buffer.toString());
+            AtomicInteger messageCount = new AtomicInteger(0);
+            AtomicInteger successCount = new AtomicInteger(0);
+            AtomicInteger errorCount = new AtomicInteger(0);
+            AtomicInteger totalCount = new AtomicInteger(0);
+
             vertx.setPeriodic(interval, time -> {
-                client.publish(topic, Buffer.buffer(Utils.getInputString()), MqttQoS.valueOf(qos), false, false);
+                client.publish(topic, buffer, MqttQoS.valueOf(qos), false, false, event -> {
+                    messageCount.getAndIncrement();
+                    if (event.succeeded()) {
+                        messageCount.getAndIncrement();
+                    }
+                });
+                // 独立计数，client连接建立过慢时会导致多发连接请求
+                totalCount.incrementAndGet();
+                if (totalCount.get() >= config.getTopic().getMessageCount()) {
+                    LOGGER.info("all message finished," + " total messages {}, success {}, " + "error {}", totalCount,
+                        successCount, errorCount);
+                    vertx.cancelTimer(time);
+                }
             });
         }
     }
