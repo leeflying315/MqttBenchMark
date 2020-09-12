@@ -14,7 +14,7 @@ v0.5
 
 ## 使用方式
 1. 使用mvn clean package 打包
-2. 运行 java -jar **.fat.jar -conf src/main/conf/conf.json
+2. 运行 start.sh 启动脚本 启动服务
 
 根据配置访问不同端口号
 
