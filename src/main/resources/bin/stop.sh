@@ -1,4 +1,4 @@
-name="MqttBenchMark-1.0-SNAPSHOT-fat.jar"
+name="MqttBenchMark-1.0-SNAPSHOT.jar"
 pid=`ps -ef | grep ${name} | grep -v grep |awk '{print $2}'`
 if [ $pid ]; then
     echo  ${name}  is  running pid=$pid start to kill

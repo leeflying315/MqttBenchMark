@@ -1,4 +1,4 @@
-name="MqttBenchMark-1.0-SNAPSHOT-fat.jar"
+name="MqttBenchMark-1.0-SNAPSHOT.jar"
 base_dir=$(cd `dirname $0`; pwd)
 main_class="com.china.unicom.mqtt.BenchMarkStarter"
 ./stop.sh

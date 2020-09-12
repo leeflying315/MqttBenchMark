@@ -3,8 +3,8 @@ package com.china.unicom.mqtt;
 import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.china.unicom.mqtt.utils.Utils;
-import com.china.unicom.mqtt.verticle.MqttClientBindNetworkForeachVerticle;
 import com.china.unicom.mqtt.verticle.MqttClientBindNetworkVerticle;
+import com.china.unicom.mqtt.verticle.record.MetricVerticle;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.DeploymentOptions;
@@ -26,6 +26,7 @@ public class BenchMarkStarter {
 
     public static void main(String[] args) throws JsonProcessingException {
 
+
         Config configBean = null;
         try {
             configBean = initConfig();
@@ -44,6 +45,8 @@ public class BenchMarkStarter {
         JsonObject config = new JsonObject().put("configBean", str);
 
         Vertx vertx = Vertx.vertx();
+        // 部署统计模块
+        vertx.deployVerticle(MetricVerticle.class.getName());
 
         if (configBean.ipLists == null) {
             LOGGER.error(" no source ip input in config.yaml, system exit");
