@@ -77,9 +77,10 @@ public class Utils {
         try {
             while ((line = reader.readLine()) != null) {
                 String[] input = line.split(",");
-                if (input.length != 4) {
+                if (input.length < 4) {
                     LOGGER.error("illegal input length {} for {}", input.length, input);
                 } else {
+                    // 0=用户名 1=密码 2=clientID 3= topic
                     mqttSessionBeanSet.add(MqttSessionBean.builder().userName(input[0]).passwd(input[1])
                         .clientId(input[2]).topic(input[3]).build());
                 }

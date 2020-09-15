@@ -26,7 +26,6 @@ public class BenchMarkStarter {
 
     public static void main(String[] args) throws JsonProcessingException {
 
-
         Config configBean = null;
         try {
             configBean = initConfig();
@@ -46,7 +45,6 @@ public class BenchMarkStarter {
 
         Vertx vertx = Vertx.vertx();
         // 部署统计模块
-        vertx.deployVerticle(MetricVerticle.class.getName());
 
         if (configBean.ipLists == null) {
             LOGGER.error(" no source ip input in config.yaml, system exit");
@@ -58,6 +56,9 @@ public class BenchMarkStarter {
         List<List<MqttSessionBean>> sortSessionGroup = getSessionInfo(src, totalConnection, sourceIps.length);
         int currentIps = 0;
         LOGGER.info("sort group is {}", sortSessionGroup.size());
+        vertx.deployVerticle(MetricVerticle.class.getName(),
+            new DeploymentOptions().setConfig(new JsonObject().put("instance", sortSessionGroup.size())));
+
         for (List<MqttSessionBean> sessionBeanList : sortSessionGroup) {
             LOGGER.info("verticle start by ip {}", sourceIps[currentIps]);
             config.put("localIp", sourceIps[currentIps]);
@@ -72,6 +73,7 @@ public class BenchMarkStarter {
             // new DeploymentOptions().setConfig(config));
             currentIps++;
         }
+
     }
 
     public static Config initConfig() throws IOException {

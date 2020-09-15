@@ -51,53 +51,58 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         int totalConnection = list.length;
         LOGGER.info("total connection is {}", totalConnection);
         MqttClientOptions mqttClientOptions = initClientOptions(config);
+        EventBus eventBus = vertx.eventBus();
 
         vertx.setPeriodic(interval, time -> {
             MqttClient client = MqttClient.create(vertx, mqttClientOptions);
             MqttSessionBean mqttSessionBean = list[totalCount.get()];
             mqttClientOptions.setUsername(mqttSessionBean.getUserName()).setPassword(mqttSessionBean.getPasswd())
-                    .setClientId(mqttSessionBean.getClientId());
+                .setClientId(mqttSessionBean.getClientId());
             client.connect(port, host, s -> {
+                MetricRateBean metricRateBean =
+                    MetricRateBean.builder().startTime(currentTime).endTime(System.currentTimeMillis()).successCount(0)
+                        .totalCount(1).errorCount(0).countFinished(false).build();
                 if (s.succeeded()) {
                     successCount.incrementAndGet();
                     // 递归调用
                     publishMessage(config, client, mqttSessionBean.getTopic());
-                    LOGGER.info("Connected to a server success, current success count {}, total count {}",
-                            successCount.get(), totalCount.get());
+                    LOGGER.info("ip {} Connected to a server success, current success count {}, total count {}",
+                        mqttClientOptions.getLocalAddress(), successCount.get(), totalCount.get());
+                    metricRateBean.setSuccessCount(1);
                 } else {
                     errorCount.incrementAndGet();
-                    LOGGER.error("client id: {}, userName: {}, passwd {}", mqttClientOptions.getClientId(),
-                            mqttClientOptions.getUsername(), mqttClientOptions.getPassword());
+                    LOGGER.error("client id: {}, userName: {}, passwd {}, local ip {}", mqttClientOptions.getClientId(),
+                        mqttClientOptions.getUsername(), mqttClientOptions.getPassword(),
+                        mqttClientOptions.getLocalAddress());
                     LOGGER.error("Failed to connect to a server ", s.cause());
+                    metricRateBean.setErrorCount(1);
                 }
+                String bean = null;
+                // 防止连接总数到了，metric仍在打印的问题
+                if (successCount.get() + errorCount.get() >= totalConnection) {
+                    metricRateBean.setCountFinished(true);
+                    LOGGER.info(
+                        "all connection finished," + " total connections {}, success {}, " + "error {}, costs {} ms",
+                        totalCount, successCount, errorCount, System.currentTimeMillis() - currentTime);
+                }
+                try {
+                    bean = objectMapper.writeValueAsString(metricRateBean);
+                } catch (JsonProcessingException e) {
+                    LOGGER.error("", e);
+                }
+                eventBus.publish(MqttTopicConstant.CONNECTION_TOPIC, bean);
 
-                // 如果所有连接发送完毕，通知计量模块更新记录
-                if (totalCount.get() >= totalConnection) {
-                    EventBus eventBus = vertx.eventBus();
-                    MetricRateBean metricRateBean = MetricRateBean.builder().
-                            startTime(currentTime)
-                            .endTime(System.currentTimeMillis())
-                            .successCount(successCount.get())
-                            .totalCount(totalCount.get())
-                            .errorCount(errorCount.get())
-                            .build();
-                    String bean = null;
-                    try {
-                        bean = objectMapper.writeValueAsString(metricRateBean);
-                    } catch (JsonProcessingException e) {
-                        LOGGER.error("", e);
-                    }
-                    eventBus.publish(MqttTopicConstant.CONNECTION_TOPIC, bean);
-                }
+            });
+            client.exceptionHandler(handler -> {
+                LOGGER.error("", handler);
             });
             // 独立计数，client连接建立过慢时会导致多发连接请求
             totalCount.incrementAndGet();
-            if (totalCount.get() >= totalConnection) {
-                LOGGER.info(
-                        "all connection finished," + " total connections {}, success {}, " + "error {}, costs {} ms",
-                        totalCount, successCount, errorCount, System.currentTimeMillis() - currentTime);
-                vertx.cancelTimer(time);
 
+            if (totalCount.get() >= totalConnection) {
+                LOGGER.info("{} ,time is up, stop timer, current status: total: {}, success: {}, error:{}",
+                    mqttClientOptions.getLocalAddress(), totalCount.get(), successCount.get(), errorCount.get());
+                vertx.cancelTimer(time);
             }
         });
 
@@ -105,7 +110,6 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
 
     public MqttClientOptions initClientOptions(Config config) {
         MqttClientOptions mqttClientOptions = new MqttClientOptions();
-
         mqttClientOptions.setAutoKeepAlive(true);
         mqttClientOptions.setKeepAliveTimeSeconds(config.getServer().getHeartBeatInterval());
         mqttClientOptions.setCleanSession(true);
@@ -116,8 +120,8 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         boolean useSsl = config.getServer().isUseTls();
         if (useSsl) {
             mqttClientOptions.setSsl(true)
-                    // .setTrustAll(true);
-                    .setPfxTrustOptions(new PfxOptions().setPath("conf/clientcert.p12").setPassword("123456"));
+                // .setTrustAll(true);
+                .setPfxTrustOptions(new PfxOptions().setPath("conf/clientcert.p12").setPassword("123456"));
         }
         return mqttClientOptions;
     }
@@ -144,44 +148,46 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
             AtomicInteger errorCount = new AtomicInteger(0);
             AtomicInteger totalCount = new AtomicInteger(0);
             long startTime = System.currentTimeMillis();
+            EventBus eventBus = vertx.eventBus();
+            // 如果所有topic发送完毕
+            MetricRateBean metricRateBean = MetricRateBean.builder().startTime(startTime).successCount(0).totalCount(1)
+                .errorCount(0).countFinished(false).build();
+
             vertx.setPeriodic(interval, time -> {
                 totalCount.incrementAndGet();
 
                 client.publish(topic, buffer, MqttQoS.valueOf(qos), false, false, event -> {
+                    metricRateBean.setEndTime(System.currentTimeMillis());
                     if (event.succeeded()) {
                         LOGGER.info("publish success");
+                        metricRateBean.setSuccessCount(1);
                         successCount.getAndIncrement();
                     } else {
                         LOGGER.info("publish failed");
+                        metricRateBean.setErrorCount(1);
                         errorCount.getAndIncrement();
                     }
                     LOGGER.info("successCount {}", successCount.get());
 
-                    LOGGER.info("totalCount {},{},{}", totalCount.get(), config.getTopic().getMessageCount(), totalCount.get() >= config.getTopic().getMessageCount());
+                    LOGGER.info("totalCount {},{},{}", totalCount.get(), config.getTopic().getMessageCount(),
+                        totalCount.get() >= config.getTopic().getMessageCount());
 
-                    // 如果所有topic发送完毕
-                    if (totalCount.get() >= config.getTopic().getMessageCount()) {
-                        EventBus eventBus = vertx.eventBus();
-                        MetricRateBean metricRateBean = MetricRateBean.builder().
-                                startTime(startTime)
-                                .endTime(System.currentTimeMillis())
-                                .successCount(successCount.get())
-                                .totalCount(totalCount.get())
-                                .errorCount(errorCount.get())
-                                .build();
-                        String bean = null;
-                        try {
-                            bean = objectMapper.writeValueAsString(metricRateBean);
-                        } catch (JsonProcessingException e) {
-                            LOGGER.error("", e);
-                        }
-                        eventBus.publish(MqttTopicConstant.PUBLISH_TOPIC, bean);
+                    if (successCount.get() + errorCount.get() >= config.getTopic().getMessageCount()) {
+                        metricRateBean.setCountFinished(true);
                     }
+                    String bean = null;
+                    try {
+                        bean = objectMapper.writeValueAsString(metricRateBean);
+                    } catch (JsonProcessingException e) {
+                        LOGGER.error("", e);
+                    }
+
+                    eventBus.publish(MqttTopicConstant.PUBLISH_TOPIC, bean);
                 });
                 // 独立计数，发布过慢时会导致多发布
                 if (totalCount.get() >= config.getTopic().getMessageCount()) {
                     LOGGER.info("all message finished," + " total messages {}, success {}, " + "error {}", totalCount,
-                            successCount, errorCount);
+                        successCount, errorCount);
                     vertx.cancelTimer(time);
                 }
             });

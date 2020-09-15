@@ -17,4 +17,6 @@ public class MetricRateBean {
     Integer totalCount;
     Integer successCount;
     Integer errorCount;
+
+    Boolean countFinished;
 }
