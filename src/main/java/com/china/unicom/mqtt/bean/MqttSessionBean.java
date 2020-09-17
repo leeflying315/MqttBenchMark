@@ -18,4 +18,6 @@ public class MqttSessionBean {
     public String clientId;
     public String topic;
 
+    public String subTopic;
+
 }

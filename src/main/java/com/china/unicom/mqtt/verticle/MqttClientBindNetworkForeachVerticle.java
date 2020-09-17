@@ -132,7 +132,7 @@ public class MqttClientBindNetworkForeachVerticle extends AbstractVerticle {
             int qos = config.getTopic().getQos();
             int interval = config.getTopic().getPublishInterval();
             vertx.setPeriodic(interval, time -> {
-                client.publish(topic, Buffer.buffer(Utils.getInputString()), MqttQoS.valueOf(qos), false, false);
+                client.publish(topic, Buffer.buffer(Utils.randomInteger()), MqttQoS.valueOf(qos), false, false);
             });
         }
     }

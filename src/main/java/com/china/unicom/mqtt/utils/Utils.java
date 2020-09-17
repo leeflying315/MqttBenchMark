@@ -77,12 +77,12 @@ public class Utils {
         try {
             while ((line = reader.readLine()) != null) {
                 String[] input = line.split(",");
-                if (input.length < 4) {
+                if (input.length < 5) {
                     LOGGER.error("illegal input length {} for {}", input.length, input);
                 } else {
                     // 0=用户名 1=密码 2=clientID 3= topic
                     mqttSessionBeanSet.add(MqttSessionBean.builder().userName(input[0]).passwd(input[1])
-                        .clientId(input[2]).topic(input[3]).build());
+                        .clientId(input[2]).topic(input[3]).subTopic(input[4]).build());
                 }
 
             }
@@ -116,11 +116,11 @@ public class Utils {
         return s;
     }
 
-    public static String getInputString() {
+    public static String getInputString(Integer messageId, long time) {
         StringBuilder sb = new StringBuilder("{\"messageId\":\"");
-        sb.append(randomInteger());
+        sb.append(messageId);
         sb.append("\",\"ts\":\"");
-        sb.append(Utils.randomTime());
+        sb.append(time);
         sb.append(
             "\",\"params\":{\"data\":[{\"key\":\"lightVoltage\",\"value\":499.01},{\"key\":\"lightCurrent\",\"value\":9.01},{\"key\":\"lightIllumination\",\"value\":9998.1},{\"key\":\"powerConsumption\",\"value\":2147483646.01},{\"key\":\"tiltValue\",\"value\":90},{\"key\":\"lightStatus\",\"value\":1},{\"key\":\"geoLocation\",\"value\":{\"longitude\":-179.000001,\"latitude\":-89.000001,\"altitude\":9998}}]}}");
         return sb.toString();

@@ -4,6 +4,8 @@ import com.china.unicom.mqtt.bean.MetricRateBean;
 import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.china.unicom.mqtt.constant.MqttTopicConstant;
+import com.china.unicom.mqtt.method.Method;
+import com.china.unicom.mqtt.utils.JsonObjectMapper;
 import com.china.unicom.mqtt.utils.Utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +19,8 @@ import io.vertx.mqtt.MqttClientOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -26,7 +30,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MqttClientBindNetworkVerticle extends AbstractVerticle {
     private static final Logger LOGGER = LogManager.getLogger(MqttClientBindNetworkVerticle.class);
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = JsonObjectMapper.getInstance();
+
+    private static final Map<Integer, Long> publicTopicMap = new HashMap<>();
 
     @Override
     public void start() {
@@ -64,8 +70,9 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                         .totalCount(1).errorCount(0).countFinished(false).build();
                 if (s.succeeded()) {
                     successCount.incrementAndGet();
+                    Method.subscribeMessage(publicTopicMap, client, mqttSessionBean.getSubTopic());
                     // 递归调用
-                    publishMessage(config, client, mqttSessionBean.getTopic());
+                    Method.publishMessage(publicTopicMap, vertx , config, client, mqttSessionBean.getTopic());
                     LOGGER.info("ip {} Connected to a server success, current success count {}, total count {}",
                         mqttClientOptions.getLocalAddress(), successCount.get(), totalCount.get());
                     metricRateBean.setSuccessCount(1);
@@ -138,59 +145,4 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         }
     }
 
-    public void publishMessage(Config config, MqttClient client, String topic) {
-        if (config.getTopic().isPublishMessage()) {
-            int qos = config.getTopic().getQos();
-            int interval = config.getTopic().getPublishInterval();
-            Buffer buffer = Buffer.buffer(Utils.getInputString());
-            LOGGER.info("topic is {}, Body is {}", topic, buffer.toString());
-            AtomicInteger successCount = new AtomicInteger(0);
-            AtomicInteger errorCount = new AtomicInteger(0);
-            AtomicInteger totalCount = new AtomicInteger(0);
-            long startTime = System.currentTimeMillis();
-            EventBus eventBus = vertx.eventBus();
-            // 如果所有topic发送完毕
-            MetricRateBean metricRateBean = MetricRateBean.builder().startTime(startTime).successCount(0).totalCount(1)
-                .errorCount(0).countFinished(false).build();
-
-            vertx.setPeriodic(interval, time -> {
-                totalCount.incrementAndGet();
-
-                client.publish(topic, buffer, MqttQoS.valueOf(qos), false, false, event -> {
-                    metricRateBean.setEndTime(System.currentTimeMillis());
-                    if (event.succeeded()) {
-                        LOGGER.info("publish success");
-                        metricRateBean.setSuccessCount(1);
-                        successCount.getAndIncrement();
-                    } else {
-                        LOGGER.info("publish failed");
-                        metricRateBean.setErrorCount(1);
-                        errorCount.getAndIncrement();
-                    }
-                    LOGGER.info("successCount {}", successCount.get());
-
-                    LOGGER.info("totalCount {},{},{}", totalCount.get(), config.getTopic().getMessageCount(),
-                        totalCount.get() >= config.getTopic().getMessageCount());
-
-                    if (successCount.get() + errorCount.get() >= config.getTopic().getMessageCount()) {
-                        metricRateBean.setCountFinished(true);
-                    }
-                    String bean = null;
-                    try {
-                        bean = objectMapper.writeValueAsString(metricRateBean);
-                    } catch (JsonProcessingException e) {
-                        LOGGER.error("", e);
-                    }
-
-                    eventBus.publish(MqttTopicConstant.PUBLISH_TOPIC, bean);
-                });
-                // 独立计数，发布过慢时会导致多发布
-                if (totalCount.get() >= config.getTopic().getMessageCount()) {
-                    LOGGER.info("all message finished," + " total messages {}, success {}, " + "error {}", totalCount,
-                        successCount, errorCount);
-                    vertx.cancelTimer(time);
-                }
-            });
-        }
-    }
 }

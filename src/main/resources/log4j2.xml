@@ -34,6 +34,9 @@
             <patternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} -%m%n" />
         </File>
 
+        <File name="Message" fileName="logs/message.log">
+            <patternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} -%m%n" />
+        </File>
     </appenders>
 
 
@@ -48,6 +51,9 @@
         </root>
         <logger name="com.china.unicom.mqtt.verticle.record.MetricVerticle" additivity="false" level="info">
             <appender-ref ref="Metric" />
+        </logger>
+        <logger name="com.china.unicom.mqtt.method.Method" additivity="false" level="info">
+            <appender-ref ref="Message" />
         </logger>
     </loggers>
 </configuration>
