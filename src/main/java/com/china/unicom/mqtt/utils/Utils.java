@@ -125,4 +125,8 @@ public class Utils {
             "\",\"params\":{\"data\":[{\"key\":\"lightVoltage\",\"value\":499.01},{\"key\":\"lightCurrent\",\"value\":9.01},{\"key\":\"lightIllumination\",\"value\":9998.1},{\"key\":\"powerConsumption\",\"value\":2147483646.01},{\"key\":\"tiltValue\",\"value\":90},{\"key\":\"lightStatus\",\"value\":1},{\"key\":\"geoLocation\",\"value\":{\"longitude\":-179.000001,\"latitude\":-89.000001,\"altitude\":9998}}]}}");
         return sb.toString();
     }
+
+    public static void main(String[] args) {
+        System.out.println(getInputString(123,System.currentTimeMillis()));
+    }
 }
