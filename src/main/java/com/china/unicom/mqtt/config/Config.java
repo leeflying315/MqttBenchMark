@@ -30,6 +30,8 @@ public class Config {
         public Integer qos;
 
         public Integer messageCount;
+
+        public boolean subPubTopic;
     }
 
     @Data

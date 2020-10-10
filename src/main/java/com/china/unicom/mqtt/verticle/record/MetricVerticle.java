@@ -27,7 +27,6 @@ public class MetricVerticle extends AbstractVerticle {
     private AtomicInteger errorPublishCount = new AtomicInteger(0);
     private AtomicInteger topicFinishCount = new AtomicInteger(0);
 
-    private Boolean countFinished = false;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -38,9 +37,21 @@ public class MetricVerticle extends AbstractVerticle {
 
         EventBus eventBus = vertx.eventBus();
         eventBus.consumer(MqttTopicConstant.CONNECTION_TOPIC, this::connectionHandler);
-        eventBus.consumer(MqttTopicConstant.PUBLISH_TOPIC, this::publishHandler);
-
+        boolean subTopic = config().getBoolean("recordPub");
         Integer instanceCount = config().getInteger("instance");
+
+        if (subTopic) {
+            eventBus.consumer(MqttTopicConstant.PUBLISH_TOPIC, this::publishHandler);
+            vertx.setPeriodic(10000, time -> {
+                if (totalPublishCount.get() != 0) {
+                    log.info("total publish: {}, success publish: {}, error publish {}, time cost: {} ms",
+                        totalPublishCount.get(), successPublishCount.get(), errorPublishCount.get(),
+                        endTime - startTime);
+                    if (topicFinishCount.get() == instanceCount)
+                        vertx.cancelTimer(time);
+                }
+            });
+        }
         vertx.setPeriodic(10000, time -> {
             log.info("total connection: {}, success connection: {}, error connection {}, time cost: {} ms",
                 totalConnectionCount.get(), successConnectionCount.get(), errorConnectionCount.get(),
@@ -49,14 +60,6 @@ public class MetricVerticle extends AbstractVerticle {
                 vertx.cancelTimer(time);
         });
 
-        vertx.setPeriodic(10000, time -> {
-            if (totalPublishCount.get() != 0) {
-                log.info("total publish: {}, success publish: {}, error publish {}, time cost: {} ms",
-                    totalPublishCount.get(), successPublishCount.get(), errorPublishCount.get(), endTime - startTime);
-                if (topicFinishCount.get() == instanceCount)
-                    vertx.cancelTimer(time);
-            }
-        });
     }
 
     // 打印每个verticle 连接建立的结果

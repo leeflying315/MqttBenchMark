@@ -56,8 +56,9 @@ public class BenchMarkStarter {
         List<List<MqttSessionBean>> sortSessionGroup = getSessionInfo(src, totalConnection, sourceIps.length);
         int currentIps = 0;
         LOGGER.info("sort group is {}", sortSessionGroup.size());
-        vertx.deployVerticle(MetricVerticle.class.getName(),
-            new DeploymentOptions().setConfig(new JsonObject().put("instance", sortSessionGroup.size())));
+        vertx.deployVerticle(MetricVerticle.class.getName(), new DeploymentOptions().setConfig(new JsonObject()
+            .put("instance", sortSessionGroup.size())
+                .put("recordPub", configBean.getTopic().isSubPubTopic())));
 
         for (List<MqttSessionBean> sessionBeanList : sortSessionGroup) {
             LOGGER.info("verticle start by ip {}", sourceIps[currentIps]);

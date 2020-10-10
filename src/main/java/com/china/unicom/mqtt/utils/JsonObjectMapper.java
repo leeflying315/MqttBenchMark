@@ -30,4 +30,8 @@ public class JsonObjectMapper {
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return objectMapper;
     }
+
+    public static void main(String[] args) {
+        System.out.println(System.currentTimeMillis());
+    }
 }
