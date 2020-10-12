@@ -20,7 +20,7 @@ public class MetricVerticle extends AbstractVerticle {
     private AtomicInteger instanceFinishCount = new AtomicInteger(0);
 
     private Long startTime = System.currentTimeMillis();
-    private Long endTime;
+    private Long endTime = System.currentTimeMillis();
 
     private AtomicInteger totalPublishCount = new AtomicInteger(0);
     private AtomicInteger successPublishCount = new AtomicInteger(0);
