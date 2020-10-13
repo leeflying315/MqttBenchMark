@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Author: lifei
- * @Description:
+ * @Description: 定时轮询访问
  * @Date: 2020/9/7
  */
 public class MqttClientBindNetworkVerticle extends AbstractVerticle {
@@ -56,14 +56,15 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         MqttSessionBean[] list = getSessionList();
         int totalConnection = list.length;
         LOGGER.info("total connection is {}", totalConnection);
-        MqttClientOptions mqttClientOptions = initClientOptions(config);
         EventBus eventBus = vertx.eventBus();
 
         vertx.setPeriodic(interval, time -> {
-            MqttClient client = MqttClient.create(vertx, mqttClientOptions);
+            MqttClientOptions mqttClientOptions = initClientOptions(config);
             MqttSessionBean mqttSessionBean = list[totalCount.get()];
             mqttClientOptions.setUsername(mqttSessionBean.getUserName()).setPassword(mqttSessionBean.getPasswd())
                 .setClientId(mqttSessionBean.getClientId());
+            LOGGER.info("current total count is {}, client is {}", totalCount.get(), mqttClientOptions.getClientId());
+            MqttClient client = MqttClient.create(vertx, mqttClientOptions);
             client.connect(port, host, s -> {
                 MetricRateBean metricRateBean =
                     MetricRateBean.builder().startTime(currentTime).endTime(System.currentTimeMillis()).successCount(0)
@@ -72,9 +73,10 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                     successCount.incrementAndGet();
                     Method.subscribeMessage(publicTopicMap, client, mqttSessionBean.getSubTopic());
                     // 递归调用
-                    Method.publishMessage(publicTopicMap, vertx , config, client, mqttSessionBean.getTopic());
-                    LOGGER.info("ip {} Connected to a server success, current success count {}, total count {}",
-                        mqttClientOptions.getLocalAddress(), successCount.get(), totalCount.get());
+                    Method.publishMessage(publicTopicMap, vertx, config, client, mqttSessionBean.getTopic());
+                    LOGGER.info(
+                        "ip {} client id {} connected to a server success, current success count {}, total count {}",
+                        mqttClientOptions.getLocalAddress(), client.clientId(), successCount.get(), totalCount.get());
                     metricRateBean.setSuccessCount(1);
                 } else {
                     errorCount.incrementAndGet();
@@ -101,7 +103,10 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
 
             });
             client.exceptionHandler(handler -> {
-                LOGGER.error("", handler);
+                LOGGER.error("error occurs", handler);
+            });
+            client.closeHandler(handler -> {
+                LOGGER.warn("receive close message {}, {}", handler, client.clientId());
             });
             // 独立计数，client连接建立过慢时会导致多发连接请求
             totalCount.incrementAndGet();

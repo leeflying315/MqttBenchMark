@@ -1,6 +1,5 @@
 package com.china.unicom.mqtt.verticle;
 
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +20,7 @@ import io.vertx.mqtt.MqttClientOptions;
 
 /**
  * @Author: lifei
- * @Description:
+ * @Description: 递归循环访问，压力测试极限使用
  * @Date: 2020/9/7
  */
 public class MqttClientBindNetworkForeachVerticle extends AbstractVerticle {
