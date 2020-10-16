@@ -10,6 +10,7 @@ import io.vertx.core.eventbus.Message;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Log4j2
 public class MetricVerticle extends AbstractVerticle {
@@ -19,13 +20,15 @@ public class MetricVerticle extends AbstractVerticle {
     private AtomicInteger errorConnectionCount = new AtomicInteger(0);
     private AtomicInteger instanceFinishCount = new AtomicInteger(0);
 
-    private Long startTime = System.currentTimeMillis();
+    private final Long startTime = System.currentTimeMillis();
     private Long endTime = System.currentTimeMillis();
 
-    private AtomicInteger totalPublishCount = new AtomicInteger(0);
-    private AtomicInteger successPublishCount = new AtomicInteger(0);
-    private AtomicInteger errorPublishCount = new AtomicInteger(0);
-    private AtomicInteger topicFinishCount = new AtomicInteger(0);
+    private final AtomicInteger totalPublishCount = new AtomicInteger(0);
+    private final AtomicInteger successPublishCount = new AtomicInteger(0);
+    private final AtomicInteger errorPublishCount = new AtomicInteger(0);
+    private final AtomicInteger topicFinishCount = new AtomicInteger(0);
+
+    private AtomicLong executeTimeCost = new AtomicLong(0);
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -53,9 +56,9 @@ public class MetricVerticle extends AbstractVerticle {
             });
         }
         vertx.setPeriodic(10000, time -> {
-            log.info("total connection: {}, success connection: {}, error connection {}, time cost: {} ms",
+            log.info("total connection: {}, success connection: {}, error connection {}," + " avg time cost: {} ms",
                 totalConnectionCount.get(), successConnectionCount.get(), errorConnectionCount.get(),
-                endTime - startTime);
+                executeTimeCost.get() / totalConnectionCount.get());
             if (instanceCount == instanceFinishCount.get())
                 vertx.cancelTimer(time);
         });
@@ -74,6 +77,7 @@ public class MetricVerticle extends AbstractVerticle {
         totalConnectionCount.addAndGet(metricRateBean.getTotalCount());
         successConnectionCount.addAndGet(metricRateBean.getSuccessCount());
         errorConnectionCount.addAndGet(metricRateBean.getErrorCount());
+        executeTimeCost.addAndGet(metricRateBean.getTimeCost());
         boolean countFinished = metricRateBean.getCountFinished();
         if (countFinished) {
             instanceFinishCount.incrementAndGet();

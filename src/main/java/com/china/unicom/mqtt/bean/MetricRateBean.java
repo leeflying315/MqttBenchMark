@@ -14,6 +14,8 @@ public class MetricRateBean {
     Long startTime;
     Long endTime;
 
+    Long timeCost;
+
     Integer totalCount;
     Integer successCount;
     Integer errorCount;

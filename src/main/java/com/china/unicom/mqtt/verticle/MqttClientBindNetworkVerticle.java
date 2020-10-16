@@ -47,36 +47,45 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         String host = config.getServer().getIp();
         int port = config.getServer().getPort();
         int interval = config.getInterval();
-
+        boolean recordPub = config.getTopic().isSubPubTopic();
+        boolean pubMessage = config.getTopic().isPublishMessage();
+        // 成功失败次数在本地汇总，不在总线进行计算。总线10秒打印一次汇总结果
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger errorCount = new AtomicInteger(0);
         AtomicInteger totalCount = new AtomicInteger(0);
 
-        long currentTime = System.currentTimeMillis();
         MqttSessionBean[] list = getSessionList();
         int totalConnection = list.length;
         LOGGER.info("total connection is {}", totalConnection);
         EventBus eventBus = vertx.eventBus();
 
-        vertx.setPeriodic(interval, time -> {
+        vertx.setPeriodic(interval, id -> {
+            long currentTime = System.currentTimeMillis();
             MqttClientOptions mqttClientOptions = initClientOptions(config);
             MqttSessionBean mqttSessionBean = list[totalCount.get()];
             mqttClientOptions.setUsername(mqttSessionBean.getUserName()).setPassword(mqttSessionBean.getPasswd())
                 .setClientId(mqttSessionBean.getClientId());
-            LOGGER.info("current total count is {}, client is {}", totalCount.get(), mqttClientOptions.getClientId());
             MqttClient client = MqttClient.create(vertx, mqttClientOptions);
             client.connect(port, host, s -> {
-                MetricRateBean metricRateBean =
-                    MetricRateBean.builder().startTime(currentTime).endTime(System.currentTimeMillis()).successCount(0)
-                        .totalCount(1).errorCount(0).countFinished(false).build();
+                MetricRateBean metricRateBean = MetricRateBean.builder().startTime(currentTime)
+                    .endTime(System.currentTimeMillis()).successCount(0).totalCount(1).errorCount(0)
+                    .countFinished(false).timeCost(System.currentTimeMillis() - currentTime).build();
                 if (s.succeeded()) {
-                    successCount.incrementAndGet();
-                    Method.subscribeMessage(publicTopicMap, client, mqttSessionBean.getSubTopic());
-                    // 递归调用
-                    Method.publishMessage(publicTopicMap, vertx, config, client, mqttSessionBean.getTopic());
+                    long endTime = System.currentTimeMillis();
                     LOGGER.info(
-                        "ip {} client id {} connected to a server success, current success count {}, total count {}",
-                        mqttClientOptions.getLocalAddress(), client.clientId(), successCount.get(), totalCount.get());
+                        "ip {} client id {} connected to a server success, current success count {}, total count {},"
+                            + " connection time cost is {} ms",
+                        mqttClientOptions.getLocalAddress(), client.clientId(), successCount.get(), totalCount.get(),
+                        endTime - currentTime);
+                    successCount.incrementAndGet();
+                    if (recordPub) {
+                        Method.subscribeMessage(publicTopicMap, client, mqttSessionBean.getSubTopic());
+                    }
+                    if (pubMessage) {
+                        // 递归调用
+                        Method.publishMessage(publicTopicMap, vertx, config, client, mqttSessionBean.getTopic());
+                    }
+
                     metricRateBean.setSuccessCount(1);
                 } else {
                     errorCount.incrementAndGet();
@@ -90,9 +99,8 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                 // 防止连接总数到了，metric仍在打印的问题
                 if (successCount.get() + errorCount.get() >= totalConnection) {
                     metricRateBean.setCountFinished(true);
-                    LOGGER.info(
-                        "all connection finished," + " total connections {}, success {}, " + "error {}, costs {} ms",
-                        totalCount, successCount, errorCount, System.currentTimeMillis() - currentTime);
+                    LOGGER.info("all connection finished," + " total connections {}, success {}, " + "error {}",
+                        totalCount, successCount, errorCount);
                 }
                 try {
                     bean = objectMapper.writeValueAsString(metricRateBean);
@@ -114,7 +122,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
             if (totalCount.get() >= totalConnection) {
                 LOGGER.info("{} ,time is up, stop timer, current status: total: {}, success: {}, error:{}",
                     mqttClientOptions.getLocalAddress(), totalCount.get(), successCount.get(), errorCount.get());
-                vertx.cancelTimer(time);
+                vertx.cancelTimer(id);
             }
         });
 

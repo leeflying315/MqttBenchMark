@@ -4,6 +4,7 @@ import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.china.unicom.mqtt.utils.Utils;
 import com.china.unicom.mqtt.verticle.MqttClientBindNetworkVerticle;
+import com.china.unicom.mqtt.verticle.MqttClientSimpleVerticle;
 import com.china.unicom.mqtt.verticle.record.MetricVerticle;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,8 +71,8 @@ public class BenchMarkStarter {
                 new DeploymentOptions().setConfig(config));
             //
             // 递归建
-            // vertx.deployVerticle(MqttClientBindNetworkForeachVerticle.class.getName(),
-            // new DeploymentOptions().setConfig(config));
+//             vertx.deployVerticle(MqttClientSimpleVerticle.class.getName(),
+//             new DeploymentOptions().setConfig(config));
             currentIps++;
         }
 
