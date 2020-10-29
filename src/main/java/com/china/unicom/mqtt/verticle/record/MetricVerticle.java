@@ -56,9 +56,13 @@ public class MetricVerticle extends AbstractVerticle {
             });
         }
         vertx.setPeriodic(10000, time -> {
-            log.info("total connection: {}, success connection: {}, error connection {}," + " avg time cost: {} ms",
-                totalConnectionCount.get(), successConnectionCount.get(), errorConnectionCount.get(),
-                executeTimeCost.get() / totalConnectionCount.get());
+            if (totalConnectionCount.get() == 0) {
+                log.info("total connection is : {}", totalConnectionCount.get());
+            } else {
+                log.info("total connection: {}, success connection: {}, error connection {}," + " avg time cost: {} ms",
+                    totalConnectionCount.get(), successConnectionCount.get(), errorConnectionCount.get(),
+                    executeTimeCost.get() / totalConnectionCount.get());
+            }
             if (instanceCount == instanceFinishCount.get())
                 vertx.cancelTimer(time);
         });
