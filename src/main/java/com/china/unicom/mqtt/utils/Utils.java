@@ -122,7 +122,7 @@ public class Utils {
         sb.append("\",\"ts\":\"");
         sb.append(time);
         sb.append(
-            "\",\"params\":{\"data\":[{\"key\":\"lightVoltage\",\"value\":499.01},{\"key\":\"lightCurrent\",\"value\":9.01}]}}");
+            "\",\"params\":{\"data\":[{\"key\":\"lightVoltage\",\"value\":499.01},{\"key\":\"lightCurrent\",\"value\":9.01},{\"key\":\"tiltValue\",\"value\":13},{\"key\":\"lightIllumination\",\"value\":12},{\"key\":\"powerConsumption\",\"value\":1.01}]}}");
         return sb.toString();
     }
 
