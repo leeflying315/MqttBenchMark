@@ -32,6 +32,12 @@ public class Config {
         public Integer messageCount;
 
         public boolean subPubTopic;
+
+        // 发布模式
+        // 1: 事件上报1
+        // 2: 事件上报2
+        // 3: 属性上报3
+        public Integer publishMode;
     }
 
     @Data

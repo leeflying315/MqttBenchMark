@@ -68,7 +68,7 @@ public class Method {
 
             vertx.setPeriodic(interval, time -> {
                 Integer messageId = Utils.randomInteger();
-                String input = Utils.getInputString(messageId, Utils.randomTime());
+                String input = Utils.getInputString(config.getTopic().getPublishMode(),messageId);
 
                 Buffer buffer = Buffer.buffer(input);
                 log.info("topic is {}, message id is {}", topic, messageId);

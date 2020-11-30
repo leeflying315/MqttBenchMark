@@ -26,7 +26,7 @@ public class MqttSingleNodeVerticle extends AbstractVerticle {
     @Override
     public void start() {
 
-        String body = Utils.getInputString(Utils.randomInteger(), Utils.randomTime());
+        String body = Utils.getInputStringByDefault(Utils.randomInteger(), Utils.randomTime());
 
         MqttClientOptions mqttClientOptions = initClientConfig();
         MqttClient client = MqttClient.create(vertx, mqttClientOptions);

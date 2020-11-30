@@ -1,6 +1,8 @@
 package com.china.unicom.mqtt.utils;
 
+import com.china.unicom.mqtt.bean.EventPubBean;
 import com.china.unicom.mqtt.bean.MqttSessionBean;
+import com.china.unicom.mqtt.bean.PropertiesPubBean;
 import org.apache.logging.log4j.LogManager;
 
 import java.io.BufferedReader;
@@ -112,11 +114,10 @@ public class Utils {
         Random random = new Random();
 
         int s = random.nextInt(max) % (max - min) + min;
-        System.out.println(s);
         return s;
     }
 
-    public static String getInputString(Integer messageId, long time) {
+    public static String getInputStringByDefault(Integer messageId, long time) {
         StringBuilder sb = new StringBuilder("{\"messageId\":\"");
         sb.append(messageId);
         sb.append("\",\"ts\":\"");
@@ -126,7 +127,14 @@ public class Utils {
         return sb.toString();
     }
 
-    public static void main(String[] args) {
-        System.out.println(getInputString(123,System.currentTimeMillis()));
+    public static String getInputString(Integer selectType, Integer messageIdInteger) {
+        String messageId = Integer.toString(messageIdInteger);
+        if (selectType == 1)
+            return EventPubBean.getPropertiesPub1(messageId);
+        if (selectType == 2)
+            return EventPubBean.getPropertiesPub2(messageId);
+        if (selectType == 3)
+            return PropertiesPubBean.getPropertiesPub(messageId);
+        return EventPubBean.getPropertiesPub1(messageId);
     }
 }
