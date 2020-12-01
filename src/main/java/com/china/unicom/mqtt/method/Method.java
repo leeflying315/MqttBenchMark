@@ -2,6 +2,7 @@ package com.china.unicom.mqtt.method;
 
 import com.china.unicom.mqtt.bean.MessageBean;
 import com.china.unicom.mqtt.bean.MetricRateBean;
+import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.china.unicom.mqtt.constant.MqttTopicConstant;
 import com.china.unicom.mqtt.utils.JsonObjectMapper;
@@ -68,7 +69,7 @@ public class Method {
 
             vertx.setPeriodic(interval, time -> {
                 Integer messageId = Utils.randomInteger();
-                String input = Utils.getInputString(config.getTopic().getPublishMode(),messageId);
+                String input = Utils.getInputString(config.getTopic().getPublishMode(), messageId);
 
                 Buffer buffer = Buffer.buffer(input);
                 log.info("topic is {}, message id is {}", topic, messageId);
@@ -107,5 +108,39 @@ public class Method {
                 }
             });
         }
+    }
+
+    public static void subSyncTopic(Map<Integer, Long> publishTopicMap, MqttClient client,
+        MqttSessionBean mqttSessionBean) {
+        // 订阅发布
+        client.subscribe(mqttSessionBean.getTopic(), MqttQoS.EXACTLY_ONCE.value());
+        // 订阅接受
+        client.subscribe(mqttSessionBean.getSubTopic(), MqttQoS.EXACTLY_ONCE.value());
+
+        client.subscribeCompletionHandler(event -> {
+            log.info("Receive SUBACK from server with granted QoS : " + event.grantedQoSLevels());
+        });
+        client.publishHandler(publish -> {
+            String json = publish.payload().toString(Charset.defaultCharset());
+            log.info("Just received message on [" + publish.topicName() + "] payload [" + json + "] with QoS ["
+                + publish.qosLevel() + "]");
+            final MessageBean objectNode;
+            Integer messageId = null;
+            try {
+                objectNode = objectMapper.readValue(json, MessageBean.class);
+                messageId = objectNode.getMessageId();
+            } catch (Exception e) {
+                log.error("", e);
+            }
+            // 接受到发布消息
+            if (publish.topicName().equals(mqttSessionBean.getTopic())) {
+                publishTopicMap.put(messageId, System.currentTimeMillis());
+            } else {
+                long publishTime = publishTopicMap.get(messageId);
+                log.info("receive response for {}, time cost {}ms", messageId,
+                    System.currentTimeMillis() - publishTime);
+                publishTopicMap.remove(messageId);
+            }
+        });
     }
 }

@@ -43,10 +43,11 @@
     <!--然后定义logger，只有定义了logger并引入的appender，appender才会生效 -->
     <loggers>
         <root level="INFO" includeLocation="true">
-            <appender-ref ref="RollingFile"/>
+<!--            <appender-ref ref="RollingFile"/>-->
             <!--            <appender-ref ref="Console"/>-->
-            <appender-ref ref="ERROR"/>
+<!--            <appender-ref ref="ERROR"/>-->
             <appender-ref ref="log"/>
+            <appender-ref ref="message"/>
 
         </root>
         <logger name="com.china.unicom.mqtt.verticle.record.MetricVerticle" additivity="false" level="info">

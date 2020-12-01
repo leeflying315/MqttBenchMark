@@ -38,6 +38,9 @@ public class Config {
         // 2: 事件上报2
         // 3: 属性上报3
         public Integer publishMode;
+
+        // 订阅topic
+        public boolean subSyncTopic;
     }
 
     @Data

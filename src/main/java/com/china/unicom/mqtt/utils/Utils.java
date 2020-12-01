@@ -82,7 +82,7 @@ public class Utils {
                 if (input.length < 5) {
                     LOGGER.error("illegal input length {} for {}", input.length, input);
                 } else {
-                    // 0=用户名 1=密码 2=clientID 3= topic
+                    // 0=用户名 1=密码 2=clientID 3= topic 4 订阅topic
                     mqttSessionBeanSet.add(MqttSessionBean.builder().userName(input[0]).passwd(input[1])
                         .clientId(input[2]).topic(input[3]).subTopic(input[4]).build());
                 }

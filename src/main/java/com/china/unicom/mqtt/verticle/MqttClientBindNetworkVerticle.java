@@ -32,7 +32,11 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
     private static final Logger LOGGER = LogManager.getLogger(MqttClientBindNetworkVerticle.class);
     private static final ObjectMapper objectMapper = JsonObjectMapper.getInstance();
 
+    // 保存发布消息的时间戳
     private static final Map<Integer, Long> publicTopicMap = new HashMap<>();
+
+    // 保存发布消息的时间戳
+    private static final Map<Integer, Long> sysTopicMap = new HashMap<>();
 
     @Override
     public void start() {
@@ -49,6 +53,8 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         int interval = config.getInterval();
         boolean recordPub = config.getTopic().isSubPubTopic();
         boolean pubMessage = config.getTopic().isPublishMessage();
+
+        boolean subSyncTopic = config.getTopic().isSubSyncTopic();
         // 成功失败次数在本地汇总，不在总线进行计算。总线10秒打印一次汇总结果
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger errorCount = new AtomicInteger(0);
@@ -85,7 +91,9 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                         // 递归调用
                         Method.publishMessage(publicTopicMap, vertx, config, client, mqttSessionBean.getTopic());
                     }
-
+                    if(subSyncTopic){
+                        Method.subSyncTopic(sysTopicMap,client,mqttSessionBean);
+                    }
                     metricRateBean.setSuccessCount(1);
                 } else {
                     errorCount.incrementAndGet();
