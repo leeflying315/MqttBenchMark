@@ -101,8 +101,6 @@ public class Utils {
         calendar.setTime(currentDate); // 设置为当前时间
         calendar.set(Calendar.MONTH, calendar.get(Calendar.MONTH) - 1); // 设置为上一个月
 
-        Date date = calendar.getTime();
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         long begin = calendar.getTimeInMillis();
         return begin + (long)(Math.random() * (System.currentTimeMillis() - begin));
 

@@ -63,8 +63,8 @@ public class EventPubBean {
     public static String getPropertiesPub1(String messageId) {
         Params.Info info1 = new Params.Info();
         info1.setKey("userId");
-        info1.setTs("12a");
-        info1.setValue(Long.toString(Utils.randomTime()));
+        info1.setValue("12a");
+        info1.setTs(Long.toString(Utils.randomTime()));
 
         Params.Info info2 = new Params.Info();
         info2.setKey("carNumber");
@@ -118,8 +118,8 @@ public class EventPubBean {
     public static String getPropertiesPub2(String messageId) {
         Params.Info info1 = new Params.Info();
         info1.setKey("alertType");
-        info1.setTs("1");
-        info1.setValue(Long.toString(Utils.randomTime()));
+        info1.setValue("1");
+        info1.setTs(Long.toString(Utils.randomTime()));
 
         Params.ObjectData objectData = new Params.ObjectData();
         objectData.setInfo(new ArrayList<Params.Info>() {
@@ -141,5 +141,10 @@ public class EventPubBean {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static void main(String[] args) {
+
+        System.out.println(getPropertiesPub2(Integer.toString(Utils.randomInteger())));
     }
 }
