@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import io.vertx.mqtt.MqttClient;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -109,4 +110,8 @@ public class MetricVerticle extends AbstractVerticle {
         endTime = metricRateBean.getEndTime();
 
     }
+    public void stopAllHandler(Message<String> message){
+        log.info("stop all clients size ");
+    }
+
 }

@@ -21,6 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,10 +41,13 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
     // 保存发布消息的时间戳
     private static final Map<Integer, Long> sysTopicMap = new HashMap<>();
 
-    private Set<MqttClient> mqttClientSet;
+    private Set<MqttClient> mqttClientSet = new HashSet<>();
 
     @Override
     public void start() {
+        EventBus eventBus = vertx.eventBus();
+
+        vertx.eventBus().consumer(MqttTopicConstant.STOP_ALL_CLIENT_TOPIC, this::stopAllHandler);
 
         String str = context.config().getString("configBean");
         Config configTemp = null;
@@ -68,8 +72,6 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         MqttSessionBean[] list = getSessionList();
         int totalConnection = list.length;
         LOGGER.info("total connection is {}", totalConnection);
-        EventBus eventBus = vertx.eventBus();
-        eventBus.consumer(MqttTopicConstant.STOP_ALL_CLIENT_TOPIC, this::stopAllHandler);
 
         vertx.setPeriodic(interval, id -> {
             long currentTime = System.currentTimeMillis();
@@ -174,6 +176,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
     }
 
     public void stopAllHandler(Message<String> message){
+        LOGGER.info("stop all clients size {}", mqttClientSet.size());
         for(MqttClient mqttClient:mqttClientSet){
             LOGGER.info("stop client {}", mqttClient.clientId());
             mqttClient.disconnect();

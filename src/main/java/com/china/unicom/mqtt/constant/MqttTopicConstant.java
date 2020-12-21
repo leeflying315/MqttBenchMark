@@ -7,5 +7,5 @@ public interface MqttTopicConstant {
     // publish计数
     String PUBLISH_TOPIC = "publish.count";
 
-    String STOP_ALL_CLIENT_TOPIC = "stop.all.client";
+    String STOP_ALL_CLIENT_TOPIC = "connection.all.client.stop";
 }
