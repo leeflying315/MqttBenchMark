@@ -13,6 +13,7 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.mqtt.MqttClient;
 import io.vertx.mqtt.MqttClientOptions;
@@ -21,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,8 +40,11 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
     // 保存发布消息的时间戳
     private static final Map<Integer, Long> sysTopicMap = new HashMap<>();
 
+    private Set<MqttClient> mqttClientSet;
+
     @Override
     public void start() {
+
         String str = context.config().getString("configBean");
         Config configTemp = null;
         try {
@@ -64,6 +69,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         int totalConnection = list.length;
         LOGGER.info("total connection is {}", totalConnection);
         EventBus eventBus = vertx.eventBus();
+        eventBus.consumer(MqttTopicConstant.STOP_ALL_CLIENT_TOPIC, this::stopAllHandler);
 
         vertx.setPeriodic(interval, id -> {
             long currentTime = System.currentTimeMillis();
@@ -95,6 +101,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                         Method.subSyncTopic(sysTopicMap,client,mqttSessionBean);
                     }
                     metricRateBean.setSuccessCount(1);
+                    mqttClientSet.add(client);
                 } else {
                     errorCount.incrementAndGet();
                     LOGGER.error("client id: {}, userName: {}, passwd {}, local ip {}", mqttClientOptions.getClientId(),
@@ -122,6 +129,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                 LOGGER.error("error occurs", handler);
             });
             client.closeHandler(handler -> {
+                mqttClientSet.remove(client);
                 LOGGER.warn("receive close message {}, {}", handler, client.clientId());
             });
             // 独立计数，client连接建立过慢时会导致多发连接请求
@@ -144,7 +152,6 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
 
         String localIp = context.config().getString("localIp");
         mqttClientOptions.setLocalAddress(localIp);
-
         boolean useSsl = config.getServer().isUseTls();
         if (useSsl) {
             mqttClientOptions.setSsl(true)
@@ -163,6 +170,13 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
         } catch (JsonProcessingException e) {
             LOGGER.error("", e);
             return null;
+        }
+    }
+
+    public void stopAllHandler(Message<String> message){
+        for(MqttClient mqttClient:mqttClientSet){
+            LOGGER.info("stop client {}", mqttClient.clientId());
+            mqttClient.disconnect();
         }
     }
 
