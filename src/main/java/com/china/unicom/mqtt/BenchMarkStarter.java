@@ -6,6 +6,7 @@ import com.china.unicom.mqtt.utils.Utils;
 import com.china.unicom.mqtt.verticle.MqttClientBindNetworkVerticle;
 import com.china.unicom.mqtt.verticle.MqttClientSimpleVerticle;
 import com.china.unicom.mqtt.verticle.record.MetricVerticle;
+import com.china.unicom.mqtt.verticle.web.StopClientVerticle;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.DeploymentOptions;
@@ -60,7 +61,7 @@ public class BenchMarkStarter {
         vertx.deployVerticle(MetricVerticle.class.getName(), new DeploymentOptions().setConfig(new JsonObject()
             .put("instance", sortSessionGroup.size())
                 .put("recordPub", configBean.getTopic().isSubPubTopic())));
-
+        vertx.deployVerticle(StopClientVerticle.class.getName());
         for (List<MqttSessionBean> sessionBeanList : sortSessionGroup) {
             LOGGER.info("verticle start by ip {}", sourceIps[currentIps]);
             config.put("localIp", sourceIps[currentIps]);
