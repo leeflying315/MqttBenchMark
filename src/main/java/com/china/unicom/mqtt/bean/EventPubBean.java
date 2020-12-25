@@ -64,17 +64,17 @@ public class EventPubBean {
         Params.Info info1 = new Params.Info();
         info1.setKey("userId");
         info1.setValue("12a");
-        info1.setTs(Long.toString(Utils.randomTime()));
+        info1.setTs(Long.toString(System.currentTimeMillis()));
 
         Params.Info info2 = new Params.Info();
         info2.setKey("carNumber");
         info2.setValue("aa2660");
-        info2.setTs(Long.toString(Utils.randomTime()));
+        info2.setTs(Long.toString(System.currentTimeMillis()));
 
         Params.Info info3 = new Params.Info();
         info3.setKey("goOutTime");
         info3.setValue("1600131935000");
-        info3.setTs(Long.toString(Utils.randomTime()));
+        info3.setTs(Long.toString(System.currentTimeMillis()));
 
         Params.ObjectData objectData = new Params.ObjectData();
         objectData.setInfo(new ArrayList<Params.Info>() {
@@ -89,7 +89,7 @@ public class EventPubBean {
         Params.Info info4 = new Params.Info();
         info4.setKey("alertType");
         info4.setValue("1");
-        info4.setTs(Long.toString(Utils.randomTime()));
+        info4.setTs(Long.toString(System.currentTimeMillis()));
 
         Params.ObjectData objectData2 = new Params.ObjectData();
         objectData2.setInfo(new ArrayList<Params.Info>() {
@@ -119,7 +119,7 @@ public class EventPubBean {
         Params.Info info1 = new Params.Info();
         info1.setKey("alertType");
         info1.setValue("1");
-        info1.setTs(Long.toString(Utils.randomTime()));
+        info1.setTs(Long.toString(System.currentTimeMillis()));
 
         Params.ObjectData objectData = new Params.ObjectData();
         objectData.setInfo(new ArrayList<Params.Info>() {

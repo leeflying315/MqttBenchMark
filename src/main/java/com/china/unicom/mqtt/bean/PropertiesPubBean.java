@@ -54,12 +54,12 @@ public class PropertiesPubBean {
         Params.ObjectData info1 = new Params.ObjectData();
         info1.setKey("gateMachineSwitch");
         info1.setValue("0");
-        info1.setTs(Long.toString(Utils.randomTime()));
+        info1.setTs(Long.toString(System.currentTimeMillis()));
 
         Params.ObjectData info2 = new Params.ObjectData();
         info2.setKey("totalParkSpace");
         info2.setValue(5);
-        info2.setTs(Long.toString(Utils.randomTime()));
+        info2.setTs(Long.toString(System.currentTimeMillis()));
 
         List<Params.ObjectData> objectData = new ArrayList<Params.ObjectData>() {
             {

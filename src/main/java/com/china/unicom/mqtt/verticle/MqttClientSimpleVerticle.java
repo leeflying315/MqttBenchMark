@@ -53,7 +53,7 @@ public class MqttClientSimpleVerticle extends AbstractVerticle {
                 } else {
                     log.error("client id: {}, userName: {}, passwd {}, local ip {}", mqttClientOptions.getClientId(),
                         mqttClientOptions.getUsername(), mqttClientOptions.getPassword(),
-                        mqttClientOptions.getLocalAddress());
+                        mqttClientOptions.getLocaMethod.javalAddress());
                     log.error("Failed to connect to a server ", s.cause());
                 }
             });

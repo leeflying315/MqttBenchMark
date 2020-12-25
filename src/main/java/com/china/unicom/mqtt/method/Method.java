@@ -53,6 +53,7 @@ public class Method {
         });
     }
 
+    // 发布消息
     public static void publishMessage(Map<Integer, Long> publicTopicMap, Vertx vertx, Config config, MqttClient client,
         String topic) {
         if (config.getTopic().isPublishMessage()) {

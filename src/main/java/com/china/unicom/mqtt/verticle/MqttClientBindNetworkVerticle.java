@@ -20,10 +20,7 @@ import io.vertx.mqtt.MqttClientOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -41,7 +38,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
     // 保存发布消息的时间戳
     private static final Map<Integer, Long> sysTopicMap = new HashMap<>();
 
-    private Set<MqttClient> mqttClientSet = new HashSet<>();
+    private Stack<MqttClient> mqttClientSet = new Stack<>();
 
     @Override
     public void start() {
@@ -103,7 +100,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                         Method.subSyncTopic(sysTopicMap,client,mqttSessionBean);
                     }
                     metricRateBean.setSuccessCount(1);
-                    mqttClientSet.add(client);
+                    mqttClientSet.push(client);
                 } else {
                     errorCount.incrementAndGet();
                     LOGGER.error("client id: {}, userName: {}, passwd {}, local ip {}", mqttClientOptions.getClientId(),
@@ -131,7 +128,7 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                 LOGGER.error("error occurs", handler);
             });
             client.closeHandler(handler -> {
-                mqttClientSet.remove(client);
+//                mqttClientSet.remove(client);
                 LOGGER.warn("receive close message {}, {}", handler, client.clientId());
             });
             // 独立计数，client连接建立过慢时会导致多发连接请求
@@ -177,10 +174,20 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
 
     public void stopAllHandler(Message<String> message){
         LOGGER.info("stop all clients size {}", mqttClientSet.size());
-        for(MqttClient mqttClient:mqttClientSet){
-            LOGGER.info("stop client {}", mqttClient.clientId());
-            mqttClient.disconnect();
-        }
+
+        // 断链速度过快会导致EMQ侧消费过慢
+        vertx.setPeriodic(100,id -> {
+            if(!mqttClientSet.empty()){
+                MqttClient mqttClient = mqttClientSet.pop();
+                mqttClient.disconnect();
+            }else {
+                vertx.cancelTimer(id);
+            }
+        });
+//        for(MqttClient mqttClient:mqttClientSet){
+//            LOGGER.info("stop client {}", mqttClient.clientId());
+//            mqttClient.disconnect();
+//        }
     }
 
 }
