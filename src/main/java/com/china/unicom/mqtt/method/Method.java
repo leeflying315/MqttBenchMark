@@ -30,6 +30,7 @@ public class Method {
     private static final ObjectMapper objectMapper = JsonObjectMapper.getInstance();
 
     public static void subscribeMessage(Map<Integer, Long> publishTopicMap, MqttClient client, String topic) {
+        log.info("sub topic for {}", topic);
         client.subscribe(topic, MqttQoS.EXACTLY_ONCE.value());
         client.subscribeCompletionHandler(event -> {
             log.info("Receive SUBACK from server with granted QoS : " + event.grantedQoSLevels());
@@ -38,14 +39,14 @@ public class Method {
             String json = publish.payload().toString(Charset.defaultCharset());
 
             log.info("Just received message on [" + publish.topicName() + "] payload [" + json + "] with QoS ["
-                + publish.qosLevel() + "]");
+                    + publish.qosLevel() + "]");
             final MessageBean objectNode;
             try {
                 objectNode = objectMapper.readValue(json, MessageBean.class);
                 Integer messageId = objectNode.getMessageId();
                 long publishTime = publishTopicMap.get(messageId);
                 log.info("receive response for {}, time cost {}ms", objectNode.getMessageId(),
-                    System.currentTimeMillis() - publishTime);
+                        System.currentTimeMillis() - publishTime);
                 publishTopicMap.remove(messageId);
             } catch (Exception e) {
                 log.error("", e);
@@ -55,7 +56,7 @@ public class Method {
 
     // 发布消息
     public static void publishMessage(Map<Integer, Long> publicTopicMap, Vertx vertx, Config config, MqttClient client,
-        String topic) {
+                                      String topic) {
         if (config.getTopic().isPublishMessage()) {
             int qos = config.getTopic().getQos();
             int interval = config.getTopic().getPublishInterval();
@@ -66,7 +67,7 @@ public class Method {
             EventBus eventBus = vertx.eventBus();
             // 如果所有topic发送完毕
             MetricRateBean metricRateBean = MetricRateBean.builder().startTime(startTime).successCount(0).totalCount(1)
-                .errorCount(0).countFinished(false).build();
+                    .errorCount(0).countFinished(false).build();
 
             vertx.setPeriodic(interval, time -> {
                 Integer messageId = Utils.randomInteger();
@@ -104,7 +105,7 @@ public class Method {
                 // 独立计数，发布过慢时会导致多发布
                 if (totalCount.get() >= config.getTopic().getMessageCount()) {
                     log.info("all message finished," + " total messages {}, success {}, " + "error {}", totalCount,
-                        successCount, errorCount);
+                            successCount, errorCount);
                     vertx.cancelTimer(time);
                 }
             });
@@ -112,11 +113,17 @@ public class Method {
     }
 
     public static void subSyncTopic(Map<Integer, Long> publishTopicMap, MqttClient client,
-        MqttSessionBean mqttSessionBean) {
+                                    MqttSessionBean mqttSessionBean) {
+        log.info("start to subscirbe topic {} and {}", mqttSessionBean.getTopic(), mqttSessionBean.getSubTopic());
         // 订阅发布
         client.subscribe(mqttSessionBean.getTopic(), MqttQoS.EXACTLY_ONCE.value());
+        client.subscribe(mqttSessionBean.getTopic(), MqttQoS.AT_LEAST_ONCE.value());
+        client.subscribe(mqttSessionBean.getTopic(), MqttQoS.AT_MOST_ONCE.value());
+
         // 订阅接受
         client.subscribe(mqttSessionBean.getSubTopic(), MqttQoS.EXACTLY_ONCE.value());
+        client.subscribe(mqttSessionBean.getSubTopic(), MqttQoS.AT_LEAST_ONCE.value());
+        client.subscribe(mqttSessionBean.getSubTopic(), MqttQoS.AT_MOST_ONCE.value());
 
         client.subscribeCompletionHandler(event -> {
             log.info("Receive SUBACK from server with granted QoS : " + event.grantedQoSLevels());
@@ -124,7 +131,7 @@ public class Method {
         client.publishHandler(publish -> {
             String json = publish.payload().toString(Charset.defaultCharset());
             log.info("Just received message on [" + publish.topicName() + "] payload [" + json + "] with QoS ["
-                + publish.qosLevel() + "]");
+                    + publish.qosLevel() + "]");
             final MessageBean objectNode;
             Integer messageId = null;
             try {
@@ -136,10 +143,12 @@ public class Method {
             // 接受到发布消息
             if (publish.topicName().equals(mqttSessionBean.getTopic())) {
                 publishTopicMap.put(messageId, System.currentTimeMillis());
-            } else {
+            }
+            // 接受到回执消息
+            else {
                 long publishTime = publishTopicMap.get(messageId);
                 log.info("receive response for {}, time cost {}ms", messageId,
-                    System.currentTimeMillis() - publishTime);
+                        System.currentTimeMillis() - publishTime);
                 publishTopicMap.remove(messageId);
             }
         });

@@ -1,5 +1,4 @@
 package com.china.unicom.mqtt;
-
 import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.china.unicom.mqtt.utils.Utils;
@@ -21,6 +20,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static java.nio.file.Files.readAllBytes;
+
 
 public class BenchMarkStarter {
     private static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(BenchMarkStarter.class);

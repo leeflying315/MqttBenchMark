@@ -92,13 +92,14 @@ public class MqttClientBindNetworkVerticle extends AbstractVerticle {
                     if (recordPub) {
                         Method.subscribeMessage(publicTopicMap, client, mqttSessionBean.getSubTopic());
                     }
+                    if(subSyncTopic){
+                        Method.subSyncTopic(sysTopicMap,client,mqttSessionBean);
+                    }
                     if (pubMessage) {
                         // 递归调用
                         Method.publishMessage(publicTopicMap, vertx, config, client, mqttSessionBean.getTopic());
                     }
-                    if(subSyncTopic){
-                        Method.subSyncTopic(sysTopicMap,client,mqttSessionBean);
-                    }
+
                     metricRateBean.setSuccessCount(1);
                     mqttClientSet.push(client);
                 } else {

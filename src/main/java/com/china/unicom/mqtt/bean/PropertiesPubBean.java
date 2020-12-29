@@ -53,7 +53,7 @@ public class PropertiesPubBean {
     public static String getPropertiesPub(String messageId) {
         Params.ObjectData info1 = new Params.ObjectData();
         info1.setKey("gateMachineSwitch");
-        info1.setValue("0");
+        info1.setValue(true);
         info1.setTs(Long.toString(System.currentTimeMillis()));
 
         Params.ObjectData info2 = new Params.ObjectData();
