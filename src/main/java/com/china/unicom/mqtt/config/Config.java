@@ -40,7 +40,10 @@ public class Config {
         public Integer publishMode;
 
         // 订阅topic
-        public boolean subSyncTopic;
+        // 0： do nothing
+        // 1: 统计发布到接收到回执耗时
+        // 2：接受到下行消息，并返回上行消息
+        public Integer subSyncTopic;
     }
 
     @Data

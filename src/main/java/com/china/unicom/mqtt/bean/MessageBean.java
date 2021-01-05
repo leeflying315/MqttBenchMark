@@ -9,5 +9,5 @@ import lombok.Data;
  */
 @Data
 public class MessageBean {
-    Integer messageId;
+    String messageId;
 }

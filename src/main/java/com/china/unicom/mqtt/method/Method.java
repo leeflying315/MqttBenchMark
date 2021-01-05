@@ -1,5 +1,6 @@
 package com.china.unicom.mqtt.method;
 
+import com.china.unicom.mqtt.bean.DownServiceBean;
 import com.china.unicom.mqtt.bean.MessageBean;
 import com.china.unicom.mqtt.bean.MetricRateBean;
 import com.china.unicom.mqtt.bean.MqttSessionBean;
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Method {
     private static final ObjectMapper objectMapper = JsonObjectMapper.getInstance();
 
-    public static void subscribeMessage(Map<Integer, Long> publishTopicMap, MqttClient client, String topic) {
+    public static void subscribeMessage(Map<String, Long> publishTopicMap, MqttClient client, String topic) {
         log.info("sub topic for {}", topic);
         client.subscribe(topic, MqttQoS.EXACTLY_ONCE.value());
         client.subscribeCompletionHandler(event -> {
@@ -43,7 +44,7 @@ public class Method {
             final MessageBean objectNode;
             try {
                 objectNode = objectMapper.readValue(json, MessageBean.class);
-                Integer messageId = objectNode.getMessageId();
+                String messageId = objectNode.getMessageId();
                 long publishTime = publishTopicMap.get(messageId);
                 log.info("receive response for {}, time cost {}ms", objectNode.getMessageId(),
                         System.currentTimeMillis() - publishTime);
@@ -55,7 +56,7 @@ public class Method {
     }
 
     // 发布消息
-    public static void publishMessage(Map<Integer, Long> publicTopicMap, Vertx vertx, Config config, MqttClient client,
+    public static void publishMessage(Map<String, Long> publicTopicMap, Vertx vertx, Config config, MqttClient client,
                                       String topic) {
         if (config.getTopic().isPublishMessage()) {
             int qos = config.getTopic().getQos();
@@ -70,7 +71,7 @@ public class Method {
                     .errorCount(0).countFinished(false).build();
 
             vertx.setPeriodic(interval, time -> {
-                Integer messageId = Utils.randomInteger();
+                String messageId = Integer.toString(Utils.randomInteger());
                 String input = Utils.getInputString(config.getTopic().getPublishMode(), messageId);
 
                 Buffer buffer = Buffer.buffer(input);
@@ -112,8 +113,27 @@ public class Method {
         }
     }
 
-    public static void subSyncTopic(Map<Integer, Long> publishTopicMap, MqttClient client,
-                                    MqttSessionBean mqttSessionBean) {
+    public static void subSyncTopic(Map<String, Long> publishTopicMap, MqttClient client,
+                                    MqttSessionBean mqttSessionBean, Integer subSyncTopic) {
+        switch (subSyncTopic){
+            case 0: {
+                break;
+            }
+            case 1: {
+                recordPubCost(publishTopicMap,client,mqttSessionBean);
+                break;
+            }
+            case 2: {
+                sendBackMessage(client,mqttSessionBean);
+                break;
+            }
+            default:
+                log.error("input type illegal {}", subSyncTopic);
+                break;
+        }
+    }
+    public static void recordPubCost(Map<String, Long> publishTopicMap, MqttClient client,
+                                     MqttSessionBean mqttSessionBean){
         log.info("start to subscirbe topic {} and {}", mqttSessionBean.getTopic(), mqttSessionBean.getSubTopic());
         // 订阅发布
         client.subscribe(mqttSessionBean.getTopic(), MqttQoS.EXACTLY_ONCE.value());
@@ -133,7 +153,7 @@ public class Method {
             log.info("Just received message on [" + publish.topicName() + "] payload [" + json + "] with QoS ["
                     + publish.qosLevel() + "]");
             final MessageBean objectNode;
-            Integer messageId = null;
+            String messageId = null;
             try {
                 objectNode = objectMapper.readValue(json, MessageBean.class);
                 messageId = objectNode.getMessageId();
@@ -150,6 +170,44 @@ public class Method {
                 log.info("receive response for {}, time cost {}ms", messageId,
                         System.currentTimeMillis() - publishTime);
                 publishTopicMap.remove(messageId);
+            }
+        });
+    }
+
+    public static void sendBackMessage( MqttClient client,
+                                     MqttSessionBean mqttSessionBean){
+        log.info("start to subscirbe topic {} and {}", mqttSessionBean.getTopic(), mqttSessionBean.getSubTopic());
+        // 订阅发布
+        client.subscribe(mqttSessionBean.getTopic(), MqttQoS.EXACTLY_ONCE.value());
+        client.subscribe(mqttSessionBean.getTopic(), MqttQoS.AT_LEAST_ONCE.value());
+        client.subscribe(mqttSessionBean.getTopic(), MqttQoS.AT_MOST_ONCE.value());
+
+        // 订阅接受
+        client.subscribe(mqttSessionBean.getSubTopic(), MqttQoS.EXACTLY_ONCE.value());
+        client.subscribe(mqttSessionBean.getSubTopic(), MqttQoS.AT_LEAST_ONCE.value());
+        client.subscribe(mqttSessionBean.getSubTopic(), MqttQoS.AT_MOST_ONCE.value());
+
+        client.subscribeCompletionHandler(event -> {
+            log.info("Receive SUBACK from server with granted QoS : " + event.grantedQoSLevels());
+        });
+        client.publishHandler(publish -> {
+            String json = publish.payload().toString(Charset.defaultCharset());
+            log.info("Just received message on [" + publish.topicName() + "] payload [" + json + "] with QoS ["
+                    + publish.qosLevel() + "]");
+            final MessageBean objectNode;
+
+            // 接受到下行消息
+            if (publish.topicName().equals(mqttSessionBean.getTopic())) {
+                String messageId = null;
+                try {
+                    objectNode = objectMapper.readValue(json, MessageBean.class);
+                    messageId = objectNode.getMessageId();
+                    DownServiceBean downServiceBean = new DownServiceBean(messageId);
+                    client.publish(mqttSessionBean.getSubTopic(), Buffer.buffer(objectMapper.writeValueAsString(downServiceBean)), MqttQoS.valueOf(1), false, false);
+
+                } catch (Exception e) {
+                    log.error("", e);
+                }
             }
         });
     }

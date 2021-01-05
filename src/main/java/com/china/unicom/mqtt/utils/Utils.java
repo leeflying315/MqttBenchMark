@@ -125,8 +125,7 @@ public class Utils {
         return sb.toString();
     }
 
-    public static String getInputString(Integer selectType, Integer messageIdInteger) {
-        String messageId = Integer.toString(messageIdInteger);
+    public static String getInputString(Integer selectType, String messageId) {
         if (selectType == 1)
             return EventPubBean.getPropertiesPub1(messageId);
         if (selectType == 2)
