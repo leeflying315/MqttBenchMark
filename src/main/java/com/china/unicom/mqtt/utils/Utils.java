@@ -12,7 +12,6 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Utils {
@@ -37,7 +36,7 @@ public class Utils {
                 while (inetAddresses.hasMoreElements()) {
                     inetAddress = inetAddresses.nextElement();
                     if (inetAddress instanceof Inet4Address && !inetAddress.isAnyLocalAddress()
-                        && !inetAddress.isLinkLocalAddress() && !inetAddress.isLoopbackAddress()) { // IPV4
+                            && !inetAddress.isLinkLocalAddress() && !inetAddress.isLoopbackAddress()) { // IPV4
                         LOGGER.info(inetAddress.getHostName());
                         ip = inetAddress.getHostAddress();
                         LOGGER.info(ip);
@@ -84,7 +83,7 @@ public class Utils {
                 } else {
                     // 0=用户名 1=密码 2=clientID 3= topic 4 订阅topic
                     mqttSessionBeanSet.add(MqttSessionBean.builder().userName(input[0]).passwd(input[1])
-                        .clientId(input[2]).topic(input[3]).subTopic(input[4]).build());
+                            .clientId(input[2]).topic(input[3]).subTopic(input[4]).build());
                 }
 
             }
@@ -102,7 +101,7 @@ public class Utils {
         calendar.set(Calendar.MONTH, calendar.get(Calendar.MONTH) - 1); // 设置为上一个月
 
         long begin = calendar.getTimeInMillis();
-        return begin + (long)(Math.random() * (System.currentTimeMillis() - begin));
+        return begin + (long) (Math.random() * (System.currentTimeMillis() - begin));
 
     }
 
@@ -121,7 +120,7 @@ public class Utils {
         sb.append("\",\"ts\":\"");
         sb.append(time);
         sb.append(
-            "\",\"params\":{\"data\":[{\"key\":\"lightVoltage\",\"value\":499.01},{\"key\":\"lightCurrent\",\"value\":9.01},{\"key\":\"tiltValue\",\"value\":13},{\"key\":\"lightIllumination\",\"value\":12},{\"key\":\"powerConsumption\",\"value\":1.01}]}}");
+                "\",\"params\":{\"data\":[{\"key\":\"lightVoltage\",\"value\":499.01},{\"key\":\"lightCurrent\",\"value\":9.01},{\"key\":\"tiltValue\",\"value\":13},{\"key\":\"lightIllumination\",\"value\":12},{\"key\":\"powerConsumption\",\"value\":1.01}]}}");
         return sb.toString();
     }
 
@@ -132,6 +131,8 @@ public class Utils {
             return EventPubBean.getPropertiesPub2(messageId);
         if (selectType == 3)
             return PropertiesPubBean.getPropertiesPub(messageId);
+        if (selectType == 4)
+            return PropertiesPubBean.getLightPropertiesPub(messageId);
         return EventPubBean.getPropertiesPub1(messageId);
     }
 }

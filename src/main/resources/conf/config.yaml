@@ -1,13 +1,31 @@
 server:
-  port: 8883
-  ip: 172.30.104.191
-  useTls: true
-  heartBeatInterval: 30
-totalConnection: 100
-interval: 1000
-ipLists: 172.30.227.8
+  port: 1883
+  ip: 172.30.208.131
+  useTls: false
+  heartBeatInterval: 300
+# 总连接数
+totalConnection: 1
+# 连接间隔
+interval: 500
+# 连接使用客户端IP地址池
+ipLists: 172.30.104.170
 topic:
-  publishMessage: false
-  publishInterval: 500
-  qos: 1
-  messageCount: 50
+  # 是否发布MQTT消息
+  publishMessage: true
+  # 发布MQTT消息间隔
+  publishInterval: 600
+  # 发布MQTT消息级别
+  qos: 0
+  messageCount: 604800
+  subPubTopic: true
+  # 发布模式
+  # 1: 事件上报1
+  # 2: 事件上报2
+  # 3: 属性上报停车场3
+  # 4: 属性上报智慧路灯
+  publishMode: 3
+  # 订阅topic
+  # 0： do nothing
+  # 1: 统计发布到接收到回执耗时
+  # 2：接受到下行消息，并返回上行消息
+  subSyncTopic: 2
