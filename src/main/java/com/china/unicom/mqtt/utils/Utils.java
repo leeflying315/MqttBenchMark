@@ -16,6 +16,7 @@ import java.util.*;
 
 public class Utils {
     private static org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(Utils.class);
+    static Random random = new Random();
 
     /**
      * 获取到所有的在活动的网卡IP 包含虚拟网卡
@@ -134,5 +135,14 @@ public class Utils {
         if (selectType == 4)
             return PropertiesPubBean.getLightPropertiesPub(messageId);
         return EventPubBean.getPropertiesPub1(messageId);
+    }
+
+    public static int rangeInteger(Integer max, Integer min) {
+
+        return random.nextInt(max - min) + min;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getInputStringByDefault(1,System.currentTimeMillis()));
     }
 }

@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
     <properties>
         <vertx.version>3.9.2</vertx.version>
-        <exec.mainClass>com.china.unicom.mqtt.BenchMarkStarter</exec.mainClass>
+        <exec.mainClass>com.china.unicom.mqtt.NormalStarter</exec.mainClass>
     </properties>
 
     <dependencies>
