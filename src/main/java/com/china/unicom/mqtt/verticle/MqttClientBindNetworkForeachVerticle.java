@@ -1,26 +1,24 @@
 package com.china.unicom.mqtt.verticle;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.china.unicom.mqtt.bean.MqttSessionBean;
 import com.china.unicom.mqtt.config.Config;
 import com.china.unicom.mqtt.utils.Utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.mqtt.MqttClient;
 import io.vertx.mqtt.MqttClientOptions;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Author: lifei
- * @Description: 递归循环访问，压力测试极限使用
+ * @Description: 递归循环访问，压力测试极限使用 存在错误率
  * @Date: 2020/9/7
  */
 public class MqttClientBindNetworkForeachVerticle extends AbstractVerticle {

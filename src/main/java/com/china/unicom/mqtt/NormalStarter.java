@@ -1,6 +1,6 @@
 package com.china.unicom.mqtt;
 
-import com.china.unicom.mqtt.verticle.test.MqttDeviceNodeVerticle2;
+import com.china.unicom.mqtt.verticle.test.MqttEmqVerticle2;
 import io.vertx.core.Vertx;
 
 public class NormalStarter {
@@ -18,7 +18,8 @@ public class NormalStarter {
 //        vertx.deployVerticle(MqttSingleNodeVerticle6.class.getName());
 //
 //        vertx.deployVerticle(MqttSingleNodeVerticle7.class.getName());
-        vertx.deployVerticle(MqttDeviceNodeVerticle2.class.getName());
+//        vertx.deployVerticle(MqttDeviceNodeVerticle2.class.getName());
+        vertx.deployVerticle(MqttEmqVerticle2.class.getName());
 
 
     }
